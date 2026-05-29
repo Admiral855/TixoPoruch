@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ТихоПоруч — SaaS адмін-панель</title>
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,Arial,sans-serif;background:#f4f6fb;color:#10162f}
+    .app{display:grid;grid-template-columns:286px 1fr;min-height:100vh}
+    .sidebar{background:#080a1d;color:#fff;padding:24px 20px;position:sticky;top:0;height:100vh}
+    .logo{display:flex;align-items:center;gap:10px;font-size:24px;font-weight:900;margin-bottom:28px}
+    .mark{width:42px;height:42px;border-radius:16px;background:linear-gradient(135deg,#c238ff,#3ba7ff);display:grid;place-items:center;box-shadow:0 16px 36px rgba(124,58,237,.35)}
+    .mark svg{width:24px;height:24px;fill:#fff}.logo span span{color:#a855f7}
+    .menu{display:flex;flex-direction:column;gap:7px}
+    .menu a{color:#cbd5e1;text-decoration:none;padding:13px 14px;border-radius:13px;font-weight:800;display:flex;align-items:center;gap:11px}
+    .menu a.active,.menu a:hover{background:linear-gradient(90deg,rgba(124,58,237,.35),rgba(59,130,246,.16));color:#fff}
+    .statusbox{margin-top:28px;background:linear-gradient(135deg,rgba(124,58,237,.38),rgba(59,130,246,.18));border:1px solid rgba(255,255,255,.14);border-radius:18px;padding:18px}
+    .statusbox b{display:block;margin-bottom:8px}.statusbox p{margin:0;color:#cbd5e1;font-size:13px;line-height:1.45}
+    .main{padding:28px}
+    .top{display:flex;justify-content:space-between;gap:18px;align-items:center;margin-bottom:22px}
+    h1{font-size:31px;margin:0 0 6px;letter-spacing:-.8px}.muted{color:#66708c;margin:0}
+    .actions{display:flex;gap:10px;align-items:center}.search{height:46px;width:300px;border:1px solid #e2e6f0;border-radius:13px;padding:0 15px;background:#fff;outline:0}
+    .btn{height:46px;border:0;border-radius:13px;padding:0 18px;background:linear-gradient(90deg,#c238ff,#3b82f6);color:#fff;font-weight:900;cursor:pointer}
+    .btn.light{background:#eee7ff;color:#6d28d9}
+    .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:18px}
+    .card{background:#fff;border:1px solid #e5e8f3;border-radius:20px;padding:20px;box-shadow:0 12px 30px rgba(15,23,42,.045)}
+    .kpi-label{color:#68718f;font-weight:800;font-size:13px;margin-bottom:10px}.kpi-value{font-size:31px;font-weight:950}.green{color:#16a34a}.red{color:#dc2626}.purple{color:#7c3aed}
+    .grid{display:grid;grid-template-columns:1.35fr .9fr;gap:18px;margin-bottom:18px}
+    .head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}
+    h2{font-size:21px;margin:0}.chip{display:inline-flex;padding:7px 10px;border-radius:999px;font-size:12px;font-weight:900}.new{background:#e0f2fe;color:#0369a1}.work{background:#fef3c7;color:#92400e}.paid{background:#dcfce7;color:#166534}.done{background:#ede9fe;color:#6d28d9}
+    table{width:100%;border-collapse:collapse}th{text-align:left;color:#68718f;font-size:13px;padding:12px 8px;border-bottom:1px solid #eef0f6}td{padding:14px 8px;border-bottom:1px solid #f0f2f7;font-size:14px}
+    .client{display:flex;align-items:center;gap:10px;font-weight:900}.ava{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,#c238ff,#3b82f6);font-weight:900}
+    .mini{height:34px;border:1px solid #e2e5f0;background:#fafbff;color:#6d28d9;border-radius:9px;padding:0 12px;font-weight:900}
+    .chart{height:245px;display:flex;align-items:end;gap:12px;padding:10px 0}.bar{flex:1;border-radius:12px 12px 5px 5px;background:linear-gradient(180deg,#c238ff,#3b82f6);min-height:35px;position:relative}.bar span{position:absolute;bottom:-24px;left:50%;transform:translateX(-50%);font-size:12px;color:#68718f}
+    .quick{display:grid;gap:12px}.quick-item{display:flex;gap:12px;padding:14px;border-radius:16px;background:#fafbff;border:1px solid #eef0f6}.ico{width:43px;height:43px;border-radius:14px;background:#eee7ff;color:#7c3aed;display:grid;place-items:center;font-size:21px;flex:0 0 auto}.quick-item b{display:block;margin-bottom:4px}.quick-item p{margin:0;color:#68718f;font-size:13px;line-height:1.45}
+    .three{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:18px}.tariff{min-height:218px}.tariff.pink{background:linear-gradient(135deg,#fff,#fff0f7)}.tariff.blue{background:linear-gradient(135deg,#fff,#eaf5ff)}.price{font-size:31px;font-weight:950;margin:18px 0 14px}.price small{font-size:15px;color:#68718f}
+    .two{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+    .consultant{display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid #f0f2f7}.consultant:last-child{border-bottom:0}.role{color:#68718f;font-size:13px}.rating{margin-left:auto;color:#f59e0b;font-weight:900}
+    .chat{height:335px;display:flex;flex-direction:column;border:1px solid #eef0f6;border-radius:18px;overflow:hidden;background:#fafbff}.chat-log{flex:1;padding:15px;overflow:auto}.msg{max-width:78%;padding:11px 13px;border-radius:14px;margin-bottom:10px;font-size:13px;line-height:1.4}.msg.left{background:#fff;border:1px solid #edf0f6}.msg.right{margin-left:auto;background:linear-gradient(90deg,#c238ff,#3b82f6);color:#fff}.chat-input{display:flex;gap:8px;padding:12px;background:#fff;border-top:1px solid #eef0f6}.chat-input input{flex:1;border:1px solid #e2e6f0;border-radius:10px;padding:0 12px}
+    .review{padding:14px 0;border-bottom:1px solid #f0f2f7}.review:last-child{border-bottom:0}.stars{color:#f59e0b}.review p{margin:6px 0 0;color:#56617d;line-height:1.45}
+    .settings-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.input,select,textarea{width:100%;border:1px solid #e2e5f0;border-radius:12px;padding:13px 14px;background:#fff;font-family:inherit;outline:0}textarea{min-height:104px;resize:vertical}.label{display:block;font-weight:900;margin-bottom:8px}
+    .ai-box{background:linear-gradient(135deg,#120d2e,#172554);color:#fff;border-radius:20px;padding:20px}.ai-box p{color:#dbeafe;line-height:1.55}.ai-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}.ai-mini{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:14px}
+    @media(max-width:1150px){.app{grid-template-columns:1fr}.sidebar{height:auto;position:relative}.kpis,.grid,.three,.two,.settings-grid,.ai-row{grid-template-columns:1fr}.top,.actions{flex-direction:column;align-items:flex-start}.search,.btn{width:100%}.tablewrap{overflow-x:auto}table{min-width:760px}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo"><span class="mark"><svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.6-9.2C.8 8.2 2.8 4.5 6.4 4.5c2 0 3.5 1.1 4.3 2.5.8-1.4 2.3-2.5 4.3-2.5 3.6 0 5.6 3.7 4 7.3C19.5 16.4 12 21 12 21z"/></svg></span><span>Тихо<span>Поруч</span></span></div>
+    <nav class="menu">
+      <a class="active" href="#overview">📊 Огляд</a>
+      <a href="#requests">💬 Заявки</a>
+      <a href="#tariffs">💳 Тарифи</a>
+      <a href="#consultants">👥 Консультанти</a>
+      <a href="#chat">💌 Чат</a>
+      <a href="#reviews">⭐ Відгуки</a>
+      <a href="#ai">🤖 ІІ-помічник</a>
+      <a href="#settings">⚙️ Налаштування</a>
+    </nav>
+    <div class="statusbox"><b>Статус системи</b><p>Сайт активний. Оплати, Telegram-сповіщення та CRM готові до підключення.</p></div>
+  </aside>
+
+  <main class="main">
+    <section class="top" id="overview">
+      <div><h1>Адмін-панель SaaS</h1><p class="muted">Повне керування сервісом психологічної підтримки.</p></div>
+      <div class="actions"><input class="search" placeholder="Пошук клієнта, заявки, повідомлення..."><button class="btn light">+ Нова заявка</button><button class="btn">Відкрити сайт</button></div>
+    </section>
+
+    <section class="kpis">
+      <div class="card"><div class="kpi-label">Нові заявки</div><div class="kpi-value">18</div><div class="green">+12% за тиждень</div></div>
+      <div class="card"><div class="kpi-label">Оплачені консультації</div><div class="kpi-value">9</div><div class="green">+4 сьогодні</div></div>
+      <div class="card"><div class="kpi-label">Дохід</div><div class="kpi-value">8 941 грн</div><div class="green">+21% за місяць</div></div>
+      <div class="card"><div class="kpi-label">Конверсія сайту</div><div class="kpi-value">7.8%</div><div class="red">-1.2% за 3 дні</div></div>
+    </section>
+
+    <section class="grid">
+      <div class="card">
+        <div class="head"><h2>Графік доходів</h2><button class="mini">30 днів</button></div>
+        <div class="chart">
+          <div class="bar" style="height:42%"><span>Пн</span></div><div class="bar" style="height:68%"><span>Вт</span></div><div class="bar" style="height:48%"><span>Ср</span></div><div class="bar" style="height:83%"><span>Чт</span></div><div class="bar" style="height:72%"><span>Пт</span></div><div class="bar" style="height:92%"><span>Сб</span></div><div class="bar" style="height:60%"><span>Нд</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="head"><h2>Швидкі дії</h2></div>
+        <div class="quick">
+          <div class="quick-item"><div class="ico">🔔</div><div><b>Telegram-сповіщення</b><p>Нова заявка одразу приходить вам у Telegram.</p></div></div>
+          <div class="quick-item"><div class="ico">💳</div><div><b>Підключити оплату</b><p>Приймайте платежі за консультації безпосередньо через сайт.</p></div></div>
+          <div class="quick-item"><div class="ico">🤖</div><div><b>Налаштування ІІ</b><p>Редагуйте стиль відповідей і правила безпеки.</p></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" id="requests">
+      <div class="head"><h2>CRM: останні заявки</h2><button class="mini">Експорт CSV</button></div>
+      <div class="tablewrap"><table><thead><tr><th>Клієнт</th><th>Тариф</th><th>Канал</th><th>Статус</th><th>Сума</th><th>Час</th><th></th></tr></thead><tbody>
+        <tr><td><div class="client"><span class="ava">А</span>Анна</div></td><td>Особиста консультація</td><td>Telegram</td><td><span class="chip new">Нова</span></td><td>699 грн</td><td>12:40</td><td><button class="mini">Відкрити</button></td></tr>
+        <tr><td><div class="client"><span class="ava">М</span>Максим</div></td><td>Швидка підтримка</td><td>Сайт</td><td><span class="chip work">В роботі</span></td><td>199 грн</td><td>11:25</td><td><button class="mini">Відкрити</button></td></tr>
+        <tr><td><div class="client"><span class="ava">І</span>Ірина</div></td><td>Супровід і підтримка</td><td>Instagram</td><td><span class="chip paid">Оплачено</span></td><td>1499 грн</td><td>10:10</td><td><button class="mini">Відкрити</button></td></tr>
+        <tr><td><div class="client"><span class="ava">О</span>Олександр</div></td><td>Особиста консультація</td><td>TikTok</td><td><span class="chip done">Завершено</span></td><td>699 грн</td><td>Вчора</td><td><button class="mini">Відкрити</button></td></tr>
+      </tbody></table></div>
+    </section>
+
+    <section class="three" id="tariffs" style="margin-top:18px">
+      <div class="card tariff"><h2>Швидка підтримка</h2><p class="muted">Коротка підтримка та первинний розбір стану клієнта.</p><div class="price">199 <small>грн</small></div><button class="mini">Редагувати тариф</button></div>
+      <div class="card tariff pink"><h2>Особиста консультація</h2><p class="muted">Онлайн-консультація у переписці з можливістю надсилати аудіоповідомлення.</p><div class="price">699 <small>грн</small></div><button class="mini">Редагувати тариф</button></div>
+      <div class="card tariff blue"><h2>Супровід і підтримка</h2><p class="muted">Консультації у форматі відео + онлайн-спілкування у переписці.</p><div class="price">1499 <small>грн</small></div><button class="mini">Редагувати тариф</button></div>
+    </section>
+
+    <section class="two">
+      <div class="card" id="consultants">
+        <div class="head"><h2>Консультанти</h2><button class="mini">+ Додати</button></div>
+        <div class="consultant"><span class="ava">М</span><div><b>Марія К.</b><div class="role">Психолог · 8 консультацій</div></div><div class="rating">★ 4.9</div></div>
+        <div class="consultant"><span class="ava">Б</span><div><b>Богдан</b><div class="role">Переписка · 12 консультацій</div></div><div class="rating">★ 5.0</div></div>
+        <div class="consultant"><span class="ava">О</span><div><b>Олена С.</b><div class="role">Відеоконсультації · 5 консультацій</div></div><div class="rating">★ 4.8</div></div>
+      </div>
+
+      <div class="card" id="reviews">
+        <div class="head"><h2>Відгуки клієнтів</h2><button class="mini">Модерація</button></div>
+        <div class="review"><b>Анна</b> <span class="stars">★★★★★</span><p>Дуже спокійна підтримка, було комфортно писати без тиску.</p></div>
+        <div class="review"><b>Ірина</b> <span class="stars">★★★★★</span><p>Відеоконсультація допомогла розкласти все по поличках.</p></div>
+        <div class="review"><b>Максим</b> <span class="stars">★★★★☆</span><p>Швидко відповіли і дали зрозумілий перший крок.</p></div>
+      </div>
+    </section>
+
+    <section class="two">
+      <div class="card" id="chat">
+        <div class="head"><h2>Вбудований чат</h2><button class="mini">Перейти в CRM</button></div>
+        <div class="chat">
+          <div class="chat-log">
+            <div class="msg left"><b>Анна:</b><br>Мені зручніше консультація у переписці, можна з аудіо?</div>
+            <div class="msg right"><b>Адмін:</b><br>Так, можна писати текстом і надсилати аудіоповідомлення.</div>
+            <div class="msg left"><b>Анна:</b><br>Добре, хочу записатися на сьогодні ввечері.</div>
+          </div>
+          <div class="chat-input"><input placeholder="Написати відповідь..."><button class="btn">Надіслати</button></div>
+        </div>
+      </div>
+
+      <div class="ai-box" id="ai">
+        <h2>🤖 Налаштування ІІ-помічника</h2>
+        <p>Тут можна задати тон спілкування, правила безпеки, мови відповідей та сценарії переходу до людини.</p>
+        <div class="ai-row">
+          <div class="ai-mini"><b>Тон:</b><br>спокійний, підтримуючий, без осуду</div>
+          <div class="ai-mini"><b>Мови:</b><br>українська + російська</div>
+          <div class="ai-mini"><b>Кризові ситуації:</b><br>рекомендація екстреної допомоги</div>
+          <div class="ai-mini"><b>Продаж:</b><br>мʼякий перехід до консультації</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" id="settings">
+      <div class="head"><h2>Налаштування сайту</h2><button class="btn">Зберегти зміни</button></div>
+      <div class="settings-grid">
+        <div><label class="label">Назва сервісу</label><input class="input" value="ТихоПоруч"></div>
+        <div><label class="label">Telegram для заявок</label><input class="input" placeholder="@your_support_bot"></div>
+        <div><label class="label">Головний заголовок</label><input class="input" value="Коли важко всередині — ми поруч"></div>
+        <div><label class="label">Статус сайту</label><select><option>Активний</option><option>На технічних роботах</option></select></div>
+        <div><label class="label">Промпт ІІ-помічника</label><textarea>Відповідай спокійно, підтримуюче, без діагнозів. Якщо є кризовий стан — рекомендуй звернутися до екстрених служб.</textarea></div>
+        <div><label class="label">Повідомлення після заявки</label><textarea>Дякуємо за звернення. Ми поруч і скоро відповімо вам.</textarea></div>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html> 
