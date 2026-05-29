@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ТихоПоруч — онлайн-підтримка</title>
+  <style>
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: Inter, Arial, sans-serif;
+      background: #07091a;
+      color: #fff;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    .hero-wrap {
+      min-height: 720px;
+      padding: 24px 5% 0;
+      background:
+        radial-gradient(circle at 52% 38%, rgba(113, 52, 255, 0.32), transparent 28%),
+        radial-gradient(circle at 86% 38%, rgba(73, 144, 255, 0.18), transparent 28%),
+        linear-gradient(180deg, #090821 0%, #07091a 100%);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero-wrap::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        radial-gradient(circle, rgba(255,255,255,.7) 1px, transparent 1px),
+        radial-gradient(circle, rgba(255,255,255,.45) 1px, transparent 1px);
+      background-size: 140px 140px, 220px 220px;
+      background-position: 30px 80px, 110px 20px;
+      opacity: .16;
+      pointer-events: none;
+    }
+
+    header {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 0 0 34px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: -0.8px;
+    }
+
+    .logo-mark {
+      width: 42px;
+      height: 42px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #b832ff, #3bb7ff);
+      display: grid;
+      place-items: center;
+      box-shadow: 0 16px 35px rgba(126, 64, 255, .35);
+    }
+
+    .logo-mark svg { width: 25px; height: 25px; fill: #fff; }
+    .logo span span { color: #9b5cff; }
+
+    nav {
+      display: flex;
+      gap: 28px;
+      align-items: center;
+      color: #f1f5f9;
+      font-size: 15px;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .lang {
+      display: flex;
+      gap: 9px;
+      color: #cbd5e1;
+      font-weight: 700;
+    }
+    .lang button {
+      color: #cbd5e1;
+      background: transparent;
+      border: 0;
+      cursor: pointer;
+      font: inherit;
+    }
+    .lang button.active { color: #fff; }
+
+    .cabinet-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 20px;
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 12px;
+      background: rgba(255,255,255,.06);
+      font-weight: 800;
+    }
+
+    .cabinet-btn svg { width: 20px; height: 20px; stroke: #fff; }
+
+    .hero {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: 1.05fr .95fr;
+      align-items: center;
+      gap: 44px;
+      padding-top: 26px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 12px 18px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.09);
+      color: #f3e8ff;
+      margin-bottom: 16px;
+      font-weight: 700;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(42px, 5.3vw, 70px);
+      line-height: 1.04;
+      letter-spacing: -2.5px;
+      max-width: 780px;
+    }
+
+    .gradient-text {
+      display: block;
+      background: linear-gradient(90deg, #b944ff, #4ca9ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-text {
+      margin: 20px 0 0;
+      color: #e2e8f0;
+      font-size: 19px;
+      line-height: 1.55;
+      max-width: 640px;
+    }
+
+    .pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-top: 24px;
+    }
+
+    .pill {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 12px 20px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.16);
+      font-weight: 800;
+    }
+
+    .pill svg { width: 20px; height: 20px; }
+
+    .hero-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-top: 26px;
+    }
+
+    .btn {
+      min-height: 56px;
+      border-radius: 13px;
+      padding: 0 28px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-weight: 900;
+      font-size: 16px;
+      cursor: pointer;
+      transition: .2s;
+    }
+
+    .btn:hover { transform: translateY(-2px); }
+    .btn-primary {
+      background: linear-gradient(90deg, #d239d6, #477cff);
+      color: #fff;
+      box-shadow: 0 18px 42px rgba(119, 71, 255, .32);
+    }
+    .btn-outline {
+      border: 1px solid rgba(165, 119, 255, .75);
+      color: #fff;
+      background: rgba(255,255,255,.03);
+    }
+    .btn svg { width: 21px; height: 21px; }
+
+    .right-hero {
+      display: grid;
+      grid-template-columns: 1fr .95fr;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .chat-card {
+      background: rgba(20, 24, 48, .78);
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 22px;
+      padding: 18px;
+      box-shadow: 0 30px 80px rgba(0,0,0,.38);
+      backdrop-filter: blur(12px);
+    }
+
+    .chat-head {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .bot-avatar {
+      width: 46px;
+      height: 46px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #b23cff, #4f7cff);
+      font-size: 24px;
+    }
+
+    .chat-head strong { display: block; font-size: 17px; }
+    .online { color: #43e98b; font-size: 13px; font-weight: 800; }
+
+    .msg {
+      padding: 13px 15px;
+      border-radius: 14px;
+      margin: 10px 0;
+      line-height: 1.35;
+      font-size: 14px;
+    }
+    .msg.bot { background: rgba(255,255,255,.09); color: #fff; margin-right: 28px; }
+    .msg.user { background: linear-gradient(90deg, #933cff, #585cff); margin-left: 48px; }
+    .dots {
+      width: 76px;
+      border-radius: 999px;
+      padding: 13px;
+      background: rgba(255,255,255,.08);
+      letter-spacing: 6px;
+      color: #d8b4fe;
+      margin-top: 14px;
+    }
+
+    .illustration {
+      min-height: 350px;
+      border-radius: 50% 0 0 50%;
+      background:
+        radial-gradient(circle at 45% 46%, rgba(206, 75, 255, .36), transparent 20%),
+        radial-gradient(circle at 68% 40%, rgba(73, 144, 255, .22), transparent 32%),
+        linear-gradient(135deg, rgba(255,255,255,.08), rgba(255,255,255,.02));
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.08);
+    }
+
+    .person {
+      position: absolute;
+      right: 24px;
+      bottom: 0;
+      width: 210px;
+      height: 285px;
+      border-radius: 110px 110px 20px 20px;
+      background:
+        radial-gradient(circle at 54% 18%, #ffc8a3 0 16px, transparent 17px),
+        linear-gradient(160deg, #24284f 20%, #5b2bb7 85%);
+      box-shadow: inset -24px -18px 0 rgba(0,0,0,.18);
+    }
+
+    .person::before {
+      content: "";
+      position: absolute;
+      width: 92px;
+      height: 70px;
+      background: #2b1743;
+      border-radius: 50% 50% 30% 30%;
+      left: 58px;
+      top: 28px;
+    }
+
+    .phone {
+      position: absolute;
+      right: 82px;
+      bottom: 92px;
+      width: 34px;
+      height: 58px;
+      border-radius: 8px;
+      background: #111827;
+      border: 2px solid #6d7cff;
+      transform: rotate(-13deg);
+    }
+
+    .heart-bubble {
+      position: absolute;
+      left: 42px;
+      top: 130px;
+      width: 62px;
+      height: 62px;
+      border-radius: 22px;
+      background: linear-gradient(135deg, #b832ff, #557cff);
+      display: grid;
+      place-items: center;
+      font-size: 27px;
+      box-shadow: 0 16px 40px rgba(133, 78, 255, .4);
+    }
+
+    .stats {
+      position: relative;
+      z-index: 2;
+      margin-top: 28px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 18px;
+      background: rgba(255,255,255,.045);
+      padding: 22px;
+      gap: 18px;
+    }
+
+    .stat {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+    .stat svg {
+      width: 42px;
+      height: 42px;
+      stroke: #d8a5ff;
+    }
+    .stat strong {
+      display: block;
+      color: #d9a8ff;
+      font-size: 24px;
+      margin-bottom: 3px;
+    }
+    .stat span { color: #cbd5e1; font-size: 14px; }
+
+    .dashboard {
+      background: #f7f8fd;
+      color: #0f1530;
+      display: grid;
+      grid-template-columns: 290px 1fr;
+      min-height: 660px;
+    }
+
+    .sidebar {
+      background: #fbfbff;
+      border-right: 1px solid #e7e9f3;
+      padding: 28px 24px;
+    }
+
+    .side-logo {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      color: #121735;
+      font-size: 24px;
+      font-weight: 900;
+      margin-bottom: 24px;
+    }
+    .side-logo .logo-mark { width: 36px; height: 36px; border-radius: 14px; }
+    .side-logo span span { color: #7c3aed; }
+
+    .side-menu {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .side-link {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 15px;
+      border-radius: 10px;
+      color: #202848;
+      font-weight: 700;
+    }
+    .side-link.active {
+      background: #eee7ff;
+      color: #6d28d9;
+    }
+    .side-link svg { width: 20px; height: 20px; stroke: currentColor; }
+    .side-badge {
+      margin-left: auto;
+      background: #8b5cf6;
+      color: white;
+      border-radius: 999px;
+      min-width: 22px;
+      height: 22px;
+      display: inline-grid;
+      place-items: center;
+      font-size: 12px;
+    }
+
+    .side-divider {
+      height: 1px;
+      background: #e3e6f0;
+      margin: 20px 0;
+    }
+
+    .urgent {
+      margin-top: 26px;
+      padding: 18px;
+      border: 1px solid #e7e9f3;
+      border-radius: 14px;
+      background: #fff;
+    }
+    .urgent strong { display: block; margin-bottom: 8px; }
+    .urgent p { margin: 0 0 12px; color: #4b5576; font-size: 13px; line-height: 1.45; }
+    .phone-line { display: flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 900; color: #111736; }
+    .phone-dot { width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg, #7c3aed, #477cff); color: #fff; display: grid; place-items: center; }
+
+    .main {
+      padding: 26px 28px 34px;
+    }
+
+    .main-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 26px;
+    }
+    .main-top h2 {
+      font-size: 28px;
+      margin: 0 0 7px;
+      letter-spacing: -.8px;
+    }
+    .main-top p { margin: 0; color: #64708f; }
+
+    .dash-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+    }
+
+    .dash-card {
+      background: #fff;
+      border: 1px solid #e5e7f2;
+      border-radius: 14px;
+      padding: 22px;
+      min-height: 170px;
+      box-shadow: 0 12px 32px rgba(15, 23, 42, .04);
+    }
+    .dash-card h3 { margin: 0 0 16px; font-size: 18px; }
+
+    .progress {
+      margin: 8px auto 18px;
+      width: 122px;
+      height: 122px;
+      border-radius: 50%;
+      background: conic-gradient(#7c3aed 0 70%, #edf0f7 70% 100%);
+      display: grid;
+      place-items: center;
+    }
+    .progress span {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      font-size: 28px;
+      font-weight: 900;
+    }
+
+    .mini-btn {
+      margin-top: 16px;
+      width: 100%;
+      height: 44px;
+      border-radius: 9px;
+      border: 1px solid #e5e7f2;
+      background: #fafaff;
+      color: #6d28d9;
+      font-weight: 800;
+      display: grid;
+      place-items: center;
+    }
+
+    .consult-person {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid #e8eaf3;
+    }
+    .avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #f7b3c8, #845ec2);
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-weight: 900;
+    }
+    .date-line {
+      margin-top: 18px;
+      font-size: 18px;
+      font-weight: 900;
+    }
+
+    .message-line, .material-line {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid #edf0f6;
+      font-size: 13px;
+    }
+    .message-line strong, .material-line strong { display: block; font-size: 14px; }
+    .message-line span, .material-line span { color: #65708c; }
+    .small-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: #eee7ff;
+      display: grid;
+      place-items: center;
+      color: #7c3aed;
+      flex: 0 0 auto;
+    }
+    .small-img {
+      margin-left: auto;
+      width: 46px;
+      height: 38px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #ded6ff, #eef6ff);
+      display: grid;
+      place-items: center;
+    }
+
+    .format-title {
+      margin: 22px 0 12px;
+      font-size: 22px;
+      font-weight: 900;
+    }
+
+    .formats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .format-card {
+      background: #fff;
+      border-radius: 14px;
+      border: 1px solid #e6e8f3;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: 50px 1fr;
+      gap: 14px;
+      align-items: start;
+      position: relative;
+      overflow: hidden;
+    }
+    .format-card.pink { background: linear-gradient(135deg, #fff, #ffe8f0); }
+    .format-card.blue { background: linear-gradient(135deg, #fff, #e9f4ff); }
+    .format-card h3 { margin: 0 0 6px; }
+    .format-card p { margin: 0; color: #52607e; line-height: 1.45; font-size: 14px; }
+    .format-price { grid-column: 1 / -1; display:flex; align-items:center; justify-content:space-between; margin-top: 12px; font-size: 25px; font-weight: 900; }
+    .format-price small { font-size: 15px; }
+    .select-btn {
+      min-width: 160px;
+      height: 38px;
+      border-radius: 8px;
+      border: 0;
+      background: linear-gradient(90deg, #d239d6, #477cff);
+      color: #fff;
+      font-weight: 900;
+    }
+    .popular {
+      position:absolute;
+      top:0;
+      right:28px;
+      background:#ff5c92;
+      color:#fff;
+      font-size:12px;
+      font-weight:900;
+      padding:7px 20px;
+      border-radius:0 0 10px 10px;
+    }
+
+    @media (max-width: 1150px) {
+      nav { display: none; }
+      .hero { grid-template-columns: 1fr; }
+      .right-hero { grid-template-columns: 1fr; }
+      .illustration { min-height: 260px; border-radius: 28px; }
+      .stats, .dash-grid { grid-template-columns: repeat(2, 1fr); }
+      .dashboard { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .formats { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 640px) {
+      .hero-wrap { padding: 18px 4% 0; }
+      header { align-items: flex-start; }
+      .top-actions { flex-direction: column; align-items: flex-end; gap: 10px; }
+      .cabinet-btn { padding: 11px 13px; font-size: 13px; }
+      .pills, .hero-buttons { flex-direction: column; }
+      .btn, .pill { width: 100%; justify-content: center; }
+      .stats, .dash-grid { grid-template-columns: 1fr; }
+      .main { padding: 22px 16px; }
+      .main-top { flex-direction: column; align-items: flex-start; }
+      .format-price { flex-direction: column; align-items: flex-start; gap: 12px; }
+      .select-btn { width: 100%; }
+    }
+  </style>
+</head>
+
+<body>
+  <section class="hero-wrap" id="home">
+    <header>
+      <a class="logo" href="#home">
+        <span class="logo-mark">
+          <svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.6-9.2C.8 8.2 2.8 4.5 6.4 4.5c2 0 3.5 1.1 4.3 2.5.8-1.4 2.3-2.5 4.3-2.5 3.6 0 5.6 3.7 4 7.3C19.5 16.4 12 21 12 21z"/></svg>
+        </span>
+        <span>Тихо<span>Поруч</span></span>
+      </a>
+
+      <nav>
+        <a href="#how" data-i18n="navHow">Як це працює</a>
+        <a href="#help" data-i18n="navHelp">Напрями підтримки</a>
+        <a href="#formats" data-i18n="navTariffs">Тарифи</a>
+        <a href="#dashboard" data-i18n="navService">Про сервіс</a>
+        <a href="#contacts" data-i18n="navContacts">Контакти</a>
+      </nav>
+
+      <div class="top-actions">
+        <div class="lang">
+          <button class="active" id="uaBtn" onclick="setLang('ua')">UA</button>
+          <span>|</span>
+          <button id="ruBtn" onclick="setLang('ru')">RU</button>
+        </div>
+        <a href="#dashboard" class="cabinet-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
+          <span data-i18n="cabinet">Особистий кабінет</span>
+        </a>
+      </div>
+    </header>
+
+    <div class="hero">
+      <div>
+        <div class="badge" data-i18n="badge">Психологічна підтримка онлайн</div>
+        <h1><span data-i18n="heroTitle1">Коли важко всередині —</span><span class="gradient-text" data-i18n="heroTitle2">ми поруч</span></h1>
+        <p class="hero-text" data-i18n="heroText">Анонімна підтримка в чаті 24/7. Поговоріть з ІІ-помічником або зверніться до фахівця, коли потрібна глибша допомога.</p>
+
+        <div class="pills">
+          <div class="pill">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#ffd94a" stroke-width="2"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+            <span data-i18n="pill1">Анонімно</span>
+          </div>
+          <div class="pill">
+            <svg viewBox="0 0 24 24" fill="#ffd94a"><path d="M13 2 3 14h8l-1 8 11-13h-8l1-7z"/></svg>
+            <span data-i18n="pill2">Швидкий старт</span>
+          </div>
+          <div class="pill">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#d8a5ff" stroke-width="2"><path d="M12 21s-6.5-4-8.5-8.1C1.9 9.5 3.8 6 7.1 6c1.9 0 3.5 1.2 4.2 2.6C12 7.2 13.6 6 15.5 6c3.3 0 5.2 3.5 3.6 6.9C18.5 17 12 21 12 21z"/></svg>
+            <span data-i18n="pill3">Без осуду</span>
+          </div>
+        </div>
+
+        <div class="hero-buttons">
+          <a href="#formats" class="btn btn-primary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/></svg>
+            <span data-i18n="startChat">Почати чат зараз</span>
+          </a>
+          <a href="#formats" class="btn btn-outline">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+            <span data-i18n="chooseConsult">Обрати консультацію</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="right-hero">
+        <div class="chat-card">
+          <div class="chat-head">
+            <div class="bot-avatar">🤖</div>
+            <div><strong data-i18n="aiTitle">ІІ-помічник</strong><span class="online" data-i18n="online">● Онлайн</span></div>
+          </div>
+          <div class="msg bot" data-i18n="chat1">Привіт! Я тут, щоб вислухати і підтримати тебе. Що тебе зараз турбує?</div>
+          <div class="msg user" data-i18n="chat2">Тривога, не можу заспокоїтись...</div>
+          <div class="msg bot" data-i18n="chat3">Зрозуміло. Давай разом розберемося, що відбувається.</div>
+          <div class="dots">•••</div>
+        </div>
+        <div class="illustration">
+          <div class="heart-bubble">💜</div>
+          <div class="person"></div>
+          <div class="phone"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><div><strong>5000+</strong><span data-i18n="stat1">людей отримали підтримку</span></div></div>
+      <div class="stat"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg><div><strong>95%</strong><span data-i18n="stat2">задоволених користувачів</span></div></div>
+      <div class="stat"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><div><strong>24/7</strong><span data-i18n="stat3">підтримка онлайн</span></div></div>
+      <div class="stat"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg><div><strong>100%</strong><span data-i18n="stat4">конфіденційність</span></div></div>
+    </div>
+  </section>
+
+  <section class="dashboard" id="dashboard">
+    <aside class="sidebar">
+      <div class="side-logo">
+        <span class="logo-mark"><svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.6-9.2C.8 8.2 2.8 4.5 6.4 4.5c2 0 3.5 1.1 4.3 2.5.8-1.4 2.3-2.5 4.3-2.5 3.6 0 5.6 3.7 4 7.3C19.5 16.4 12 21 12 21z"/></svg></span>
+        <span>Тихо<span>Поруч</span></span>
+      </div>
+      <div class="side-menu">
+        <a class="side-link active"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span data-i18n="sideHome">Головна</span></a>
+        <a class="side-link"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span data-i18n="sideConsult">Мої консультації</span></a>
+        <a class="side-link"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/></svg><span data-i18n="sideMessages">Повідомлення</span><b class="side-badge">2</b></a>
+        <a class="side-link"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg><span data-i18n="sideBookmarks">Закладки</span></a>
+        <a class="side-link"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg><span data-i18n="sidePayments">Оплати</span></a>
+        <a class="side-link"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg><span data-i18n="sideProfile">Профіль</span></a>
+        <a class="side-link"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4"/></svg><span data-i18n="sideSettings">Налаштування</span></a>
+      </div>
+      <div class="side-divider"></div>
+      <a class="side-link"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg><span data-i18n="sideExit">Вийти</span></a>
+
+      <div class="urgent">
+        <strong data-i18n="urgentTitle">Потрібна термінова допомога?</strong>
+        <p data-i18n="urgentText">Якщо у вас кризова ситуація — зателефонуйте за номером:</p>
+        <div class="phone-line"><span class="phone-dot">☎</span>7333</div>
+        <p data-i18n="urgentSub">Безкоштовно. Цілодобово.</p>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="main-top">
+        <div>
+          <h2 data-i18n="welcome">Вітаємо, Анна! 👋</h2>
+          <p data-i18n="welcomeText">Ми раді, що ви з нами. Ви не одні.</p>
+        </div>
+        <a href="#formats" class="btn btn-primary" data-i18n="bookBtn">Записатися на консультацію</a>
+      </div>
+
+      <div class="dash-grid">
+        <div class="dash-card">
+          <h3 data-i18n="progressTitle">Мій прогрес</h3>
+          <div class="progress"><span>70%</span></div>
+          <p data-i18n="progressText">Ви на правильному шляху!</p>
+          <a class="mini-btn" data-i18n="details">Переглянути деталі</a>
+        </div>
+
+        <div class="dash-card">
+          <h3 data-i18n="nextConsult">Наступна консультація</h3>
+          <div class="consult-person"><div class="avatar">М</div><div><strong>Марія К.</strong><br><span data-i18n="psychologist">Психолог</span></div></div>
+          <div class="date-line" data-i18n="date">15 травня, 18:00</div>
+          <a class="mini-btn" data-i18n="more">Детальніше</a>
+        </div>
+
+        <div class="dash-card">
+          <h3 data-i18n="lastMessages">Останні повідомлення</h3>
+          <div class="message-line"><div class="small-icon">🤖</div><div><strong data-i18n="aiTitle2">ІІ-помічник</strong><span data-i18n="msgToday">Як ти почуваєшся сьогодні?</span></div></div>
+          <div class="message-line"><div class="small-icon">М</div><div><strong>Марія К.</strong><span data-i18n="msgMary">Дякую за довіру! Як твій стан?</span></div></div>
+          <div class="message-line"><div class="small-icon">💬</div><div><strong data-i18n="support">Підтримка сервісу</strong><span data-i18n="paymentOk">Ваш платіж успішно підтверджено</span></div></div>
+          <a class="mini-btn" data-i18n="allMessages">Всі повідомлення</a>
+        </div>
+
+        <div class="dash-card">
+          <h3 data-i18n="materials">Корисні матеріали</h3>
+          <div class="material-line"><div><strong data-i18n="mat1">Як впоратись з тривогою</strong><span>7 хв читання</span></div><div class="small-img">🧘</div></div>
+          <div class="material-line"><div><strong data-i18n="mat2">Дихальні техніки</strong><span>5 хв читання</span></div><div class="small-img">🌬️</div></div>
+          <div class="material-line"><div><strong data-i18n="mat3">Самопідтримка щодня</strong><span>6 хв читання</span></div><div class="small-img">💜</div></div>
+          <a class="mini-btn" data-i18n="allMaterials">Всі матеріали</a>
+        </div>
+      </div>
+
+      <div class="format-title" id="formats" data-i18n="formatsTitle">Формати підтримки</div>
+      <div class="formats">
+        <div class="format-card">
+          <div class="small-icon">💬</div>
+          <div>
+            <h3 data-i18n="f1Title">Швидка підтримка</h3>
+            <p data-i18n="f1Text">Коротка підтримка та первинний розбір твого стану.</p>
+          </div>
+          <div class="format-price">199 <small>грн</small><button class="select-btn" data-i18n="start">Почати</button></div>
+        </div>
+
+        <div class="format-card pink">
+          <div class="popular" data-i18n="popular">Популярний</div>
+          <div class="small-icon">👤</div>
+          <div>
+            <h3 data-i18n="f2Title">Особиста консультація</h3>
+            <p data-i18n="f2Text">Онлайн-консультація у переписці з можливістю надсилати аудіоповідомлення. Повна свобода спілкування у зручному для тебе темпі.</p>
+          </div>
+          <div class="format-price">699 <small>грн</small><button class="select-btn" data-i18n="choose">Обрати</button></div>
+        </div>
+
+        <div class="format-card blue">
+          <div class="small-icon">📹</div>
+          <div>
+            <h3 data-i18n="f3Title">Супровід і підтримка</h3>
+            <p data-i18n="f3Text">Консультації у форматі відео + онлайн-спілкування у переписці.</p>
+          </div>
+          <div class="format-price">1499 <small>грн</small><button class="select-btn" data-i18n="choose2">Обрати</button></div>
+        </div>
+      </div>
+    </main>
+  </section>
+
+<script>
+const t = {
+  ua: {
+    navHow:"Як це працює", navHelp:"Напрями підтримки", navTariffs:"Тарифи", navService:"Про сервіс", navContacts:"Контакти", cabinet:"Особистий кабінет",
+    badge:"Психологічна підтримка онлайн", heroTitle1:"Коли важко всередині —", heroTitle2:"ми поруч",
+    heroText:"Анонімна підтримка в чаті 24/7. Поговоріть з ІІ-помічником або зверніться до фахівця, коли потрібна глибша допомога.",
+    pill1:"Анонімно", pill2:"Швидкий старт", pill3:"Без осуду", startChat:"Почати чат зараз", chooseConsult:"Обрати консультацію",
+    aiTitle:"ІІ-помічник", online:"● Онлайн", chat1:"Привіт! Я тут, щоб вислухати і підтримати тебе. Що тебе зараз турбує?", chat2:"Тривога, не можу заспокоїтись...", chat3:"Зрозуміло. Давай разом розберемося, що відбувається.",
+    stat1:"людей отримали підтримку", stat2:"задоволених користувачів", stat3:"підтримка онлайн", stat4:"конфіденційність",
+    sideHome:"Головна", sideConsult:"Мої консультації", sideMessages:"Повідомлення", sideBookmarks:"Закладки", sidePayments:"Оплати", sideProfile:"Профіль", sideSettings:"Налаштування", sideExit:"Вийти",
+    urgentTitle:"Потрібна термінова допомога?", urgentText:"Якщо у вас кризова ситуація — зателефонуйте за номером:", urgentSub:"Безкоштовно. Цілодобово.",
+    welcome:"Вітаємо, Анна! 👋", welcomeText:"Ми раді, що ви з нами. Ви не одні.", bookBtn:"Записатися на консультацію",
+    progressTitle:"Мій прогрес", progressText:"Ви на правильному шляху!", details:"Переглянути деталі", nextConsult:"Наступна консультація", psychologist:"Психолог", date:"15 травня, 18:00", more:"Детальніше",
+    lastMessages:"Останні повідомлення", aiTitle2:"ІІ-помічник", msgToday:"Як ти почуваєшся сьогодні?", msgMary:"Дякую за довіру! Як твій стан?", support:"Підтримка сервісу", paymentOk:"Ваш платіж успішно підтверджено", allMessages:"Всі повідомлення",
+    materials:"Корисні матеріали", mat1:"Як впоратись з тривогою", mat2:"Дихальні техніки", mat3:"Самопідтримка щодня", allMaterials:"Всі матеріали",
+    formatsTitle:"Формати підтримки", f1Title:"Швидка підтримка", f1Text:"Коротка підтримка та первинний розбір твого стану.", start:"Почати",
+    popular:"Популярний", f2Title:"Особиста консультація", f2Text:"Онлайн-консультація у переписці з можливістю надсилати аудіоповідомлення. Повна свобода спілкування у зручному для тебе темпі.", choose:"Обрати",
+    f3Title:"Супровід і підтримка", f3Text:"Консультації у форматі відео + онлайн-спілкування у переписці.", choose2:"Обрати"
+  },
+  ru: {
+    navHow:"Как это работает", navHelp:"Направления поддержки", navTariffs:"Тарифы", navService:"О сервисе", navContacts:"Контакты", cabinet:"Личный кабинет",
+    badge:"Психологическая поддержка онлайн", heroTitle1:"Когда тяжело внутри —", heroTitle2:"мы рядом",
+    heroText:"Анонимная поддержка в чате 24/7. Поговорите с ИИ-помощником или обратитесь к специалисту, когда нужна более глубокая помощь.",
+    pill1:"Анонимно", pill2:"Быстрый старт", pill3:"Без осуждения", startChat:"Начать чат сейчас", chooseConsult:"Выбрать консультацию",
+    aiTitle:"ИИ-помощник", online:"● Онлайн", chat1:"Привет! Я здесь, чтобы выслушать и поддержать тебя. Что тебя сейчас тревожит?", chat2:"Тревога, не могу успокоиться...", chat3:"Понимаю. Давай вместе разберемся, что происходит.",
+    stat1:"людей получили поддержку", stat2:"довольных пользователей", stat3:"поддержка онлайн", stat4:"конфиденциальность",
+    sideHome:"Главная", sideConsult:"Мои консультации", sideMessages:"Сообщения", sideBookmarks:"Закладки", sidePayments:"Оплаты", sideProfile:"Профиль", sideSettings:"Настройки", sideExit:"Выйти",
+    urgentTitle:"Нужна срочная помощь?", urgentText:"Если у вас кризисная ситуация — позвоните по номеру:", urgentSub:"Бесплатно. Круглосуточно.",
+    welcome:"Добро пожаловать, Анна! 👋", welcomeText:"Мы рады, что вы с нами. Вы не одни.", bookBtn:"Записаться на консультацию",
+    progressTitle:"Мой прогресс", progressText:"Вы на правильном пути!", details:"Посмотреть детали", nextConsult:"Следующая консультация", psychologist:"Психолог", date:"15 мая, 18:00", more:"Подробнее",
+    lastMessages:"Последние сообщения", aiTitle2:"ИИ-помощник", msgToday:"Как ты чувствуешь себя сегодня?", msgMary:"Спасибо за доверие! Как твое состояние?", support:"Поддержка сервиса", paymentOk:"Ваш платеж успешно подтвержден", allMessages:"Все сообщения",
+    materials:"Полезные материалы", mat1:"Как справиться с тревогой", mat2:"Дыхательные техники", mat3:"Самоподдержка каждый день", allMaterials:"Все материалы",
+    formatsTitle:"Форматы поддержки", f1Title:"Быстрая поддержка", f1Text:"Короткая поддержка и первичный разбор твоего состояния.", start:"Начать",
+    popular:"Популярный", f2Title:"Личная консультация", f2Text:"Онлайн-консультация в переписке с возможностью отправлять аудиосообщения. Полная свобода общения в удобном для тебя темпе.", choose:"Выбрать",
+    f3Title:"Сопровождение и поддержка", f3Text:"Консультации в формате видео + онлайн-общение в переписке.", choose2:"Выбрать"
+  }
+};
+
+function setLang(lang) {
+  document.documentElement.lang = lang === "ua" ? "uk" : "ru";
+  document.title = lang === "ua" ? "ТихоПоруч — онлайн-підтримка" : "ТихоПоруч — онлайн-поддержка";
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    const key = el.getAttribute("data-i18n");
+    if (t[lang][key]) el.textContent = t[lang][key];
+  });
+  document.getElementById("uaBtn").classList.toggle("active", lang === "ua");
+  document.getElementById("ruBtn").classList.toggle("active", lang === "ru");
+  localStorage.setItem("tp_lang", lang);
+}
+setLang(localStorage.getItem("tp_lang") || "ua");
+</script>
+</body>
+</html>
