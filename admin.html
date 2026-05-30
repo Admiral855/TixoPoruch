@@ -49,7 +49,7 @@
     <nav class="menu">
       <a class="active">📊 CRM</a><a>💬 Заявки</a><a>👥 Клієнти</a><a>💳 Тарифи</a><a>🤖 ІІ-помічник</a><a>⚙️ Налаштування</a>
     </nav>
-    <div class="statusbox"><b>Статус системи</b><p>CRM працює локально у браузері. Наступний етап — підключення бази даних.</p><button class="logout" onclick="adminLogout()">Вийти</button></div>
+    <div class="statusbox"><b>Статус системи</b><p>CRM підключена до Supabase. Заявки з сайту та бота зберігаються в базі.</p><button class="logout" onclick="adminLogout()">Вийти</button></div>
   </aside>
 
   <main class="main">
@@ -63,7 +63,7 @@
     </section>
 
     <section class="kpis">
-      <div class="card"><div class="kpi-label">Усього заявок</div><div class="kpi-value" id="kpiTotal">0</div><div class="green">CRM активна</div></div>
+      <div class="card"><div class="kpi-label">Усього заявок</div><div class="kpi-value" id="kpiTotal">0</div><div class="green">Supabase активна</div></div>
       <div class="card"><div class="kpi-label">Нові</div><div class="kpi-value" id="kpiNew">0</div><div class="purple">потребують відповіді</div></div>
       <div class="card"><div class="kpi-label">В роботі</div><div class="kpi-value" id="kpiWork">0</div><div class="purple">активні клієнти</div></div>
       <div class="card"><div class="kpi-label">Оплачено</div><div class="kpi-value" id="kpiPaid">0</div><div class="green">готові консультації</div></div>
@@ -71,7 +71,7 @@
 
     <section class="crm-grid">
       <div class="card">
-        <div class="head"><h2>Список клієнтів</h2><button class="mini" onclick="seedDemo()">Демо-дані</button></div>
+        <div class="head"><h2>Список клієнтів</h2><button class="mini" onclick="loadClients()">Оновити</button></div>
         <div class="tablewrap">
           <table><thead><tr><th>Клієнт</th><th>Тариф</th><th>Статус</th><th>Контакт</th><th>Оновлено</th><th></th></tr></thead><tbody id="clientsBody"></tbody></table>
         </div>
@@ -101,37 +101,53 @@
 
 <script>
 const ADMIN_LOGIN="admin", ADMIN_PASSWORD="Tiho2026!";
-let clients = JSON.parse(localStorage.getItem("tp_clients") || "[]");
+let clients = [];
 let selectedId = null;
 
 function adminLogin(){
   const u=document.getElementById("loginUser").value.trim(), p=document.getElementById("loginPass").value;
   if(u===ADMIN_LOGIN && p===ADMIN_PASSWORD){localStorage.setItem("tp_admin_logged","yes");showAdmin()} else document.getElementById("loginError").textContent="Невірний логін або пароль";
 }
-function showAdmin(){document.body.classList.remove("locked");document.getElementById("loginScreen").style.display="none";renderClients()}
+function showAdmin(){document.body.classList.remove("locked");document.getElementById("loginScreen").style.display="none";loadClients()}
 function adminLogout(){localStorage.removeItem("tp_admin_logged");location.reload()}
 if(localStorage.getItem("tp_admin_logged")==="yes") showAdmin();
 
-function save(){localStorage.setItem("tp_clients",JSON.stringify(clients))}
-function now(){return new Date().toLocaleString("uk-UA",{timeZone:"Europe/Kyiv"})}
+function formatDate(value){try{return value ? new Date(value).toLocaleString("uk-UA",{timeZone:"Europe/Kyiv"}) : ""}catch(e){return value||""}}
 function statusLabel(s){return {new:"Нова",work:"В роботі",paid:"Оплачено",done:"Завершено"}[s]||s}
 function statusClass(s){return {new:"new",work:"work",paid:"paid",done:"done"}[s]||"new"}
 function initials(n){return (n||"?").trim().charAt(0).toUpperCase()}
+
+async function api(path, options={}){
+  const r = await fetch(path, {headers:{"Content-Type":"application/json"}, ...options});
+  const d = await r.json().catch(()=>({ok:false,error:"Bad JSON"}));
+  if(!r.ok || d.ok === false) throw new Error(d.error || "API error");
+  return d;
+}
+
+async function loadClients(){
+  try{
+    const data = await api("/api/clients");
+    clients = data.clients || [];
+    renderClients();
+  }catch(e){
+    document.getElementById("clientsBody").innerHTML = `<tr><td colspan="6" style="color:#dc2626;font-weight:900;">Помилка завантаження: ${e.message}</td></tr>`;
+  }
+}
 
 function renderClients(){
   const q=(document.getElementById("searchInput")?.value||"").toLowerCase();
   const sf=document.getElementById("statusFilter")?.value||"";
   const list=clients.filter(c=>{
-    const hay=(c.name+" "+c.contact+" "+c.tariff+" "+c.request+" "+c.note).toLowerCase();
+    const hay=((c.name||"")+" "+(c.contact||"")+" "+(c.tariff||"")+" "+(c.request||"")+" "+(c.note||"")).toLowerCase();
     return (!q||hay.includes(q)) && (!sf||c.status===sf);
   });
   document.getElementById("clientsBody").innerHTML=list.map(c=>`
     <tr>
-      <td><div class="client"><span class="ava">${initials(c.name)}</span>${c.name}</div></td>
-      <td>${c.tariff}</td>
-      <td><span class="chip ${statusClass(c.status)}">${statusLabel(c.status)}</span></td>
-      <td>${c.contact}</td>
-      <td>${c.updated}</td>
+      <td><div class="client"><span class="ava">${initials(c.name)}</span>${c.name||"Без імені"}</div></td>
+      <td>${c.tariff||""}</td>
+      <td><span class="chip ${statusClass(c.status)}">${statusLabel(c.status||"new")}</span></td>
+      <td>${c.contact||""}</td>
+      <td>${formatDate(c.updated_at || c.created_at)}</td>
       <td><button class="mini" onclick="openClient('${c.id}')">Відкрити</button></td>
     </tr>`).join("") || `<tr><td colspan="6">Поки немає заявок.</td></tr>`;
   document.getElementById("kpiTotal").textContent=clients.length;
@@ -145,15 +161,15 @@ function openClient(id){
   const c=clients.find(x=>x.id===id);
   if(!c)return;
   document.getElementById("detailCard").innerHTML=`
-    <div class="profile"><span class="ava">${initials(c.name)}</span><div><h3>${c.name}</h3><p>${c.contact}</p></div></div>
+    <div class="profile"><span class="ava">${initials(c.name)}</span><div><h3>${c.name||"Без імені"}</h3><p>${c.contact||""}</p></div></div>
     <div class="info-grid">
-      <div class="info"><b>Тариф</b><span>${c.tariff}</span></div>
-      <div class="info"><b>Статус</b><span class="chip ${statusClass(c.status)}">${statusLabel(c.status)}</span></div>
-      <div class="info"><b>Створено</b><span>${c.created}</span></div>
-      <div class="info"><b>Оновлено</b><span>${c.updated}</span></div>
+      <div class="info"><b>Тариф</b><span>${c.tariff||""}</span></div>
+      <div class="info"><b>Статус</b><span class="chip ${statusClass(c.status)}">${statusLabel(c.status||"new")}</span></div>
+      <div class="info"><b>Створено</b><span>${formatDate(c.created_at)}</span></div>
+      <div class="info"><b>Джерело</b><span>${c.source||"CRM"}</span></div>
     </div>
     <label class="label">Статус</label>
-    <select class="full" id="detailStatus" onchange="updateClientStatus('${c.id}',this.value)">
+    <select class="full" id="detailStatus">
       <option value="new" ${c.status==="new"?"selected":""}>Нова</option>
       <option value="work" ${c.status==="work"?"selected":""}>В роботі</option>
       <option value="paid" ${c.status==="paid"?"selected":""}>Оплачено</option>
@@ -162,38 +178,38 @@ function openClient(id){
     <label class="label">Запит клієнта</label><textarea id="detailRequest">${c.request||""}</textarea>
     <label class="label">Внутрішня нотатка</label><textarea id="detailNote">${c.note||""}</textarea>
     <div class="modal-actions"><button class="mini red" onclick="deleteClient('${c.id}')">Видалити</button><button class="btn" onclick="saveDetail('${c.id}')">Зберегти</button></div>
-    <div class="timeline"><h2>Історія</h2>${(c.history||[]).map(h=>`<div class="event"><b>${h.title}</b><small>${h.time}</small></div>`).join("")}</div>`;
+    <div class="timeline"><h2>Історія</h2><div class="event"><b>Картка у Supabase</b><small>ID: ${c.id}</small></div></div>`;
 }
 
-function updateClientStatus(id,status){
-  const c=clients.find(x=>x.id===id); if(!c)return;
-  c.status=status;c.updated=now();c.history.unshift({title:"Статус змінено: "+statusLabel(status),time:c.updated});save();renderClients();openClient(id)
+async function saveDetail(id){
+  await api("/api/clients", {method:"PUT", body:JSON.stringify({
+    id,
+    status:document.getElementById("detailStatus").value,
+    request:document.getElementById("detailRequest").value,
+    note:document.getElementById("detailNote").value
+  })});
+  await loadClients(); openClient(id);
 }
-function saveDetail(id){
-  const c=clients.find(x=>x.id===id); if(!c)return;
-  c.request=document.getElementById("detailRequest").value;c.note=document.getElementById("detailNote").value;c.updated=now();c.history.unshift({title:"Оновлено картку клієнта",time:c.updated});save();renderClients();openClient(id)
-}
-function deleteClient(id){
+async function deleteClient(id){
   if(!confirm("Видалити заявку?"))return;
-  clients=clients.filter(c=>c.id!==id);save();selectedId=null;renderClients();
+  await api("/api/clients", {method:"DELETE", body:JSON.stringify({id})});
+  selectedId=null; await loadClients();
   document.getElementById("detailCard").innerHTML=`<div class="detail-empty"><div><h2>Оберіть клієнта</h2><p>Натисніть “Відкрити”, щоб побачити картку заявки.</p></div></div>`
 }
 function openModal(){document.getElementById("modal").style.display="block"}
 function closeModal(){document.getElementById("modal").style.display="none"}
-function addClient(){
+async function addClient(){
   const name=document.getElementById("newName").value.trim(), contact=document.getElementById("newContact").value.trim();
   if(!name||!contact){alert("Заповніть імʼя та контакт");return}
-  const c={id:String(Date.now()),name,contact,tariff:document.getElementById("newTariff").value,status:document.getElementById("newStatus").value,request:document.getElementById("newRequest").value,note:document.getElementById("newNote").value,created:now(),updated:now(),history:[{title:"Створено заявку",time:now()}]};
-  clients.unshift(c);save();closeModal();renderClients();openClient(c.id);
-}
-function seedDemo(){
-  if(clients.length && !confirm("Додати демо-заявки до поточного списку?"))return;
-  const demo=[
-    {name:"Анна",contact:"@anna_client",tariff:"Онлайн-консультація в переписці — 699 грн",status:"new",request:"Тривога, складно заснути, хочу консультацію у переписці.",note:"Відповісти після 18:00"},
-    {name:"Максим",contact:"@max_support",tariff:"Швидкий чат — 199 грн",status:"work",request:"Потрібно швидко поговорити, багато стресу на роботі.",note:"Можливо запропонувати переписку"},
-    {name:"Ірина",contact:"@iryna_video",tariff:"Відеоконсультація + переписка — 1499 грн",status:"paid",request:"Хоче відеоконсультацію і подальшу переписку.",note:"Оплата підтверджена"}
-  ].map(x=>({...x,id:String(Date.now()+Math.random()),created:now(),updated:now(),history:[{title:"Створено демо-заявку",time:now()}]}));
-  clients=[...demo,...clients];save();renderClients()
+  const result = await api("/api/clients", {method:"POST", body:JSON.stringify({
+    name, contact,
+    tariff:document.getElementById("newTariff").value,
+    status:document.getElementById("newStatus").value,
+    request:document.getElementById("newRequest").value,
+    note:document.getElementById("newNote").value,
+    source:"CRM"
+  })});
+  closeModal(); await loadClients(); if(result.client?.id) openClient(result.client.id);
 }
 document.getElementById("modal").addEventListener("click",e=>{if(e.target.id==="modal")closeModal()});
 document.addEventListener("keydown",e=>{if(e.key==="Enter"&&document.body.classList.contains("locked"))adminLogin()});
