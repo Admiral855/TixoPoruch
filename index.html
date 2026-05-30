@@ -631,7 +631,16 @@
       .format-price { flex-direction: column; align-items: flex-start; gap: 12px; }
       .select-btn { width: 100%; }
     }
-  </style>
+  
+.request-modal-backdrop{display:none;position:fixed;inset:0;z-index:9998;background:rgba(5,8,22,.72);backdrop-filter:blur(10px);padding:20px}
+.request-modal{max-width:520px;margin:60px auto 0;background:#11142a;border:1px solid rgba(255,255,255,.14);border-radius:26px;padding:26px;color:#fff;box-shadow:0 30px 90px rgba(0,0,0,.35)}
+.request-modal h3{margin:0 0 8px;font-size:26px}.request-modal p{margin:0 0 20px;color:#cbd5e1;line-height:1.5}
+.request-modal input,.request-modal select,.request-modal textarea{width:100%;border:1px solid rgba(255,255,255,.14);border-radius:14px;background:rgba(255,255,255,.08);color:#fff;padding:14px 15px;margin-bottom:12px;outline:none;font-family:inherit;font-size:15px}
+.request-modal option{color:#111827}.request-modal textarea{min-height:105px;resize:vertical}
+.request-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:6px}
+.request-status{min-height:22px;margin:10px 0 0;font-weight:800;color:#bfdbfe}
+.close-btn{background:rgba(255,255,255,.08)!important;border:1px solid rgba(255,255,255,.14)!important;box-shadow:none!important}
+</style>
 </head>
 
 <body>
@@ -875,6 +884,50 @@ function setLang(lang) {
   localStorage.setItem("tp_lang", lang);
 }
 setLang(localStorage.getItem("tp_lang") || "ua");
+</script>
+
+<div class="request-modal-backdrop" id="requestModal">
+  <div class="request-modal">
+    <h3>Заявка на консультацію</h3>
+    <p>Заповніть форму — заявка прийде нам у Telegram.</p>
+    <input id="clientName" placeholder="Ваше імʼя">
+    <input id="clientTelegram" placeholder="Ваш Telegram / телефон">
+    <select id="clientTariff">
+      <option value="Швидкий чат — 199 грн">Швидкий чат — 199 грн</option>
+      <option value="Онлайн-консультація в переписці — 699 грн">Онлайн-консультація в переписці — 699 грн</option>
+      <option value="Консультація з камерою + переписка — 1499 грн">Консультація з камерою + переписка — 1499 грн</option>
+    </select>
+    <textarea id="clientMessage" placeholder="Коротко опишіть, що вас турбує"></textarea>
+    <div class="request-actions">
+      <button class="btn btn-secondary close-btn" onclick="closeRequestModal()">Закрити</button>
+      <button class="btn btn-primary" onclick="sendRequest()">Надіслати заявку</button>
+    </div>
+    <div class="request-status" id="requestStatus"></div>
+  </div>
+</div>
+<script>
+function openRequestModal(){document.getElementById("requestModal").style.display="block";}
+function closeRequestModal(){document.getElementById("requestModal").style.display="none";document.getElementById("requestStatus").textContent="";}
+async function sendRequest(){
+  const status=document.getElementById("requestStatus");
+  const name=document.getElementById("clientName").value.trim();
+  const contact=document.getElementById("clientTelegram").value.trim();
+  const tariff=document.getElementById("clientTariff").value;
+  const message=document.getElementById("clientMessage").value.trim();
+  if(!name || !contact){status.textContent="Заповніть імʼя та контакт.";return;}
+  status.textContent="Відправляємо заявку...";
+  try{
+    const r=await fetch("/api/send-telegram",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,contact,tariff,message,page:window.location.href})});
+    const d=await r.json();
+    if(d.ok){
+      status.textContent="Заявку відправлено. Ми скоро звʼяжемося з вами.";
+      document.getElementById("clientName").value="";
+      document.getElementById("clientTelegram").value="";
+      document.getElementById("clientMessage").value="";
+    }else{status.textContent="Помилка відправки. Перевірте налаштування Vercel.";}
+  }catch(e){status.textContent="Помилка зʼєднання. Перевірте налаштування Vercel.";}
+}
+document.addEventListener("click",function(e){if(e.target && e.target.id==="requestModal") closeRequestModal();});
 </script>
 </body>
 </html>
