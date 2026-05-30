@@ -124,13 +124,51 @@ async function api(path, options={}){
   return d;
 }
 
-async function loadClients(){
+async function addClient(){
   try{
-    const data = await api("/api/clients");
-    clients = data.clients || [];
-    renderClients();
-  }catch(e){
-    document.getElementById("clientsBody").innerHTML = `<tr><td colspan="6" style="color:#dc2626;font-weight:900;">Помилка завантаження: ${e.message}</td></tr>`;
+    const name=document.getElementById("newName").value.trim();
+    const contact=document.getElementById("newContact").value.trim();
+
+    if(!name){
+      alert("Вкажіть ім'я");
+      return;
+    }
+
+    if(!contact){
+      alert("Вкажіть контакт");
+      return;
+    }
+
+    const payload = {
+      name,
+      contact,
+      tariff: document.getElementById("newTariff").value,
+      status: document.getElementById("newStatus").value,
+      request: document.getElementById("newRequest").value,
+      note: document.getElementById("newNote").value,
+      source: "CRM"
+    };
+
+    console.log("SEND:", payload);
+
+    const result = await api("/api/clients",{
+      method:"POST",
+      body:JSON.stringify(payload)
+    });
+
+    alert("Заявка успішно створена");
+
+    closeModal();
+
+    await loadClients();
+
+    if(result.client && result.client.id){
+      openClient(result.client.id);
+    }
+
+  }catch(error){
+    console.error(error);
+    alert("Помилка: " + error.message);
   }
 }
 
