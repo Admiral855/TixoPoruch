@@ -886,10 +886,12 @@ function setLang(lang) {
 setLang(localStorage.getItem("tp_lang") || "ua");
 </script>
 
+
 <div class="request-modal-backdrop" id="requestModal">
   <div class="request-modal">
     <h3>Заявка на консультацію</h3>
     <p>Заповніть форму — заявка прийде нам у Telegram.</p>
+
     <input id="clientName" placeholder="Ваше імʼя">
     <input id="clientTelegram" placeholder="Ваш Telegram / телефон">
     <select id="clientTariff">
@@ -898,36 +900,88 @@ setLang(localStorage.getItem("tp_lang") || "ua");
       <option value="Консультація з камерою + переписка — 1499 грн">Консультація з камерою + переписка — 1499 грн</option>
     </select>
     <textarea id="clientMessage" placeholder="Коротко опишіть, що вас турбує"></textarea>
+
     <div class="request-actions">
-      <button class="btn btn-secondary close-btn" onclick="closeRequestModal()">Закрити</button>
-      <button class="btn btn-primary" onclick="sendRequest()">Надіслати заявку</button>
+      <button type="button" class="btn btn-secondary request-close" onclick="closeRequestModal()">Закрити</button>
+      <button type="button" class="btn btn-primary" onclick="sendRequest()">Надіслати заявку</button>
     </div>
     <div class="request-status" id="requestStatus"></div>
   </div>
 </div>
+
 <script>
-function openRequestModal(){document.getElementById("requestModal").style.display="block";}
-function closeRequestModal(){document.getElementById("requestModal").style.display="none";document.getElementById("requestStatus").textContent="";}
-async function sendRequest(){
-  const status=document.getElementById("requestStatus");
-  const name=document.getElementById("clientName").value.trim();
-  const contact=document.getElementById("clientTelegram").value.trim();
-  const tariff=document.getElementById("clientTariff").value;
-  const message=document.getElementById("clientMessage").value.trim();
-  if(!name || !contact){status.textContent="Заповніть імʼя та контакт.";return;}
-  status.textContent="Відправляємо заявку...";
-  try{
-    const r=await fetch("/api/send-telegram",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,contact,tariff,message,page:window.location.href})});
-    const d=await r.json();
-    if(d.ok){
-      status.textContent="Заявку відправлено. Ми скоро звʼяжемося з вами.";
-      document.getElementById("clientName").value="";
-      document.getElementById("clientTelegram").value="";
-      document.getElementById("clientMessage").value="";
-    }else{status.textContent="Помилка відправки. Перевірте налаштування Vercel.";}
-  }catch(e){status.textContent="Помилка зʼєднання. Перевірте налаштування Vercel.";}
+function openRequestModal(){
+  const modal = document.getElementById("requestModal");
+  if (modal) modal.style.display = "block";
 }
-document.addEventListener("click",function(e){if(e.target && e.target.id==="requestModal") closeRequestModal();});
+
+function closeRequestModal(){
+  const modal = document.getElementById("requestModal");
+  const status = document.getElementById("requestStatus");
+  if (modal) modal.style.display = "none";
+  if (status) status.textContent = "";
+}
+
+async function sendRequest(){
+  const status = document.getElementById("requestStatus");
+  const name = document.getElementById("clientName").value.trim();
+  const contact = document.getElementById("clientTelegram").value.trim();
+  const tariff = document.getElementById("clientTariff").value;
+  const message = document.getElementById("clientMessage").value.trim();
+
+  if(!name || !contact){
+    status.textContent = "Заповніть імʼя та контакт.";
+    return;
+  }
+
+  status.textContent = "Відправляємо заявку...";
+
+  try{
+    const response = await fetch("/api/send-telegram", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({name, contact, tariff, message, page: window.location.href})
+    });
+
+    const data = await response.json();
+
+    if(data.ok){
+      status.textContent = "Заявку відправлено. Ми скоро звʼяжемося з вами.";
+      document.getElementById("clientName").value = "";
+      document.getElementById("clientTelegram").value = "";
+      document.getElementById("clientMessage").value = "";
+    } else {
+      status.textContent = "Помилка відправки: " + (data.error || "перевірте Vercel.");
+    }
+  } catch(e){
+    status.textContent = "Помилка зʼєднання. Перевірте API та змінні Vercel.";
+  }
+}
+
+document.addEventListener("DOMContentLoaded", function(){
+  const keywords = [
+    "почати чат", "почати чат зараз", "обрати консультацію", "записатися", "записатись",
+    "хочу консультацію", "обрати", "почати", "надіслати заявку",
+    "начать чат", "выбрать консультацию", "записаться", "хочу консультацию", "начать", "выбрать"
+  ];
+
+  document.querySelectorAll("a, button").forEach(function(el){
+    const text = (el.textContent || "").trim().toLowerCase();
+
+    if (keywords.some(k => text.includes(k)) && !text.includes("закрити") && !text.includes("надіслати заявку")) {
+      el.addEventListener("click", function(e){
+        e.preventDefault();
+        openRequestModal();
+      });
+    }
+  });
+
+  const modal = document.getElementById("requestModal");
+  if (modal) {
+    modal.addEventListener("click", function(e){
+      if(e.target.id === "requestModal") closeRequestModal();
+    });
+  }
+});
 </script>
-</body>
-</html>
+</body></html>
