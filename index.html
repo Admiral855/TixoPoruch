@@ -906,6 +906,7 @@ setLang(localStorage.getItem("tp_lang") || "ua");
       <button type="button" class="btn btn-primary" onclick="sendRequest()">Надіслати заявку</button>
     </div>
     <div class="request-status" id="requestStatus"></div>
+    <a id="telegramAfterSubmit" href="https://t.me/tihoporuch_support_bot" target="_blank" class="btn btn-primary" style="display:none;width:100%;margin-top:14px;text-align:center;">Відкрити Telegram</a>
   </div>
 </div>
 
@@ -920,6 +921,8 @@ function closeRequestModal(){
   const status = document.getElementById("requestStatus");
   if (modal) modal.style.display = "none";
   if (status) status.textContent = "";
+  const tgBtn = document.getElementById("telegramAfterSubmit");
+  if (tgBtn) tgBtn.style.display = "none";
 }
 
 async function sendRequest(){
@@ -946,7 +949,9 @@ async function sendRequest(){
     const data = await response.json();
 
     if(data.ok){
-      status.textContent = "Заявку відправлено. Ми скоро звʼяжемося з вами.";
+      status.innerHTML = "Дякуємо 💜 Заявку відправлено.<br>Щоб отримати відповідь швидше — відкрийте наш Telegram-бот.";
+      const tgBtn = document.getElementById("telegramAfterSubmit");
+      if (tgBtn) tgBtn.style.display = "inline-flex";
       document.getElementById("clientName").value = "";
       document.getElementById("clientTelegram").value = "";
       document.getElementById("clientMessage").value = "";
