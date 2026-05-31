@@ -20,7 +20,7 @@
     .statusbox{margin-top:28px;background:linear-gradient(135deg,rgba(124,58,237,.38),rgba(59,130,246,.18));border:1px solid rgba(255,255,255,.14);border-radius:18px;padding:18px}.statusbox p{margin:8px 0 14px;color:#cbd5e1;font-size:13px;line-height:1.45}.logout{width:100%;height:40px;border-radius:12px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;font-weight:900;cursor:pointer}
     .main{padding:28px}.top{display:flex;justify-content:space-between;gap:18px;align-items:center;margin-bottom:22px}h1{font-size:31px;margin:0 0 6px;letter-spacing:-.8px}.muted{color:#66708c;margin:0;line-height:1.45}
     .actions{display:flex;gap:10px;align-items:center}.search,.input,select,textarea{border:1px solid #e2e6f0;border-radius:13px;padding:13px 14px;background:#fff;outline:0;font-family:inherit}.search{height:46px;width:300px}.btn.light{background:#eee7ff;color:#6d28d9}.btn.gray{background:#eef0f6;color:#34405e}
-    .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:18px}.card{background:#fff;border:1px solid #e5e8f3;border-radius:20px;padding:20px;box-shadow:0 12px 30px rgba(15,23,42,.045)}.kpi-label{color:#68718f;font-weight:800;font-size:13px;margin-bottom:10px}.kpi-value{font-size:31px;font-weight:950}.green{color:#16a34a}.purple{color:#7c3aed}
+    .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:18px}.card{background:#fff;border:1px solid #e5e8f3;border-radius:20px;padding:20px;box-shadow:0 12px 30px rgba(15,23,42,.045)}.kpi-label{color:#68718f;font-weight:800;font-size:13px;margin-bottom:10px}.kpi-value{font-size:31px;font-weight:950}.green{color:#16a34a}.purple{color:#7c3aed}
     .crm-grid{display:grid;grid-template-columns:1.2fr .85fr;gap:18px}.head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}h2{font-size:21px;margin:0}
     table{width:100%;border-collapse:collapse}th{text-align:left;color:#68718f;font-size:13px;padding:12px 8px;border-bottom:1px solid #eef0f6}td{padding:14px 8px;border-bottom:1px solid #f0f2f7;font-size:14px;vertical-align:middle}
     .client{display:flex;align-items:center;gap:10px;font-weight:900}.ava{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,#c238ff,#3b82f6);font-weight:900;flex:0 0 auto}
@@ -68,7 +68,7 @@
       <div><h1>CRM клієнтів</h1><p class="muted">Заявки, статуси, нотатки та історія спілкування в одному місці.</p></div>
       <div class="actions">
         <input class="search" id="searchInput" placeholder="Пошук клієнта, Telegram, запиту..." oninput="renderClients()">
-        <select id="statusFilter" onchange="renderClients()"><option value="">Усі статуси</option><option value="new">Нова</option><option value="work">В роботі</option><option value="waiting_payment">Очікує оплату</option><option value="paid">Оплачено</option><option value="done">Завершено</option></select>
+        <select id="statusFilter" onchange="renderClients()"><option value="">Усі статуси</option><option value="new">Нова</option><option value="work">В роботі</option><option value="waiting_payment">Очікує оплату</option><option value="paid">Оплачено</option><option value="done">Виконано</option></select>
         <button class="btn light" onclick="openModal()">+ Додати заявку</button>
       </div>
     </section>
@@ -78,6 +78,7 @@
       <div class="card"><div class="kpi-label">Нові</div><div class="kpi-value" id="kpiNew">0</div><div class="purple">потребують відповіді</div></div>
       <div class="card"><div class="kpi-label">В роботі</div><div class="kpi-value" id="kpiWork">0</div><div class="purple">активні клієнти</div></div>
       <div class="card"><div class="kpi-label">Оплачено</div><div class="kpi-value" id="kpiPaid">0</div><div class="green">готові консультації</div></div>
+      <div class="card"><div class="kpi-label">Виконано</div><div class="kpi-value" id="kpiDone">0</div><div class="green">закриті консультації</div></div>
     </section>
 
     <section class="crm-grid">
@@ -102,7 +103,7 @@
       <input class="input" id="newName" placeholder="Імʼя">
       <input class="input" id="newContact" placeholder="Telegram / телефон">
       <select id="newTariff"><option>Швидкий чат — 199 грн</option><option>Онлайн-консультація в переписці — 699 грн</option><option>Відеоконсультація + переписка — 1499 грн</option></select>
-      <select id="newStatus"><option value="new">Нова</option><option value="work">В роботі</option><option value="waiting_payment">Очікує оплату</option><option value="paid">Оплачено</option><option value="done">Завершено</option></select>
+      <select id="newStatus"><option value="new">Нова</option><option value="work">В роботі</option><option value="waiting_payment">Очікує оплату</option><option value="paid">Оплачено</option><option value="done">Виконано</option></select>
       <textarea class="wide" id="newRequest" placeholder="Запит клієнта"></textarea>
       <textarea class="wide" id="newNote" placeholder="Внутрішня нотатка"></textarea>
     </div>
@@ -124,7 +125,7 @@ function adminLogout(){localStorage.removeItem("tp_admin_logged");location.reloa
 if(localStorage.getItem("tp_admin_logged")==="yes") showAdmin();
 
 function formatDate(value){try{return value ? new Date(value).toLocaleString("uk-UA",{timeZone:"Europe/Kyiv"}) : ""}catch(e){return value||""}}
-function statusLabel(s){return {new:"Нова",work:"В роботі",waiting_payment:"Очікує оплату",paid:"Оплачено",done:"Завершено"}[s]||s}
+function statusLabel(s){return {new:"Нова",work:"В роботі",waiting_payment:"Очікує оплату",paid:"Оплачено",done:"Виконано"}[s]||s}
 function statusClass(s){return {new:"new",work:"work",waiting_payment:"waiting_payment",paid:"paid",done:"done"}[s]||"new"}
 function initials(n){return (n||"?").trim().charAt(0).toUpperCase()}
 
@@ -165,6 +166,8 @@ function renderClients(){
   document.getElementById("kpiNew").textContent=clients.filter(c=>c.status==="new").length;
   document.getElementById("kpiWork").textContent=clients.filter(c=>c.status==="work").length;
   document.getElementById("kpiPaid").textContent=clients.filter(c=>c.status==="paid").length;
+  const doneEl = document.getElementById("kpiDone");
+  if(doneEl) doneEl.textContent=clients.filter(c=>c.status==="done").length;
 }
 
 function cleanText(text){
@@ -192,7 +195,7 @@ function openClient(id){
       <option value="work" ${c.status==="work"?"selected":""}>В роботі</option>
       <option value="waiting_payment" ${c.status==="waiting_payment"?"selected":""}>Очікує оплату</option>
       <option value="paid" ${c.status==="paid"?"selected":""}>Оплачено</option>
-      <option value="done" ${c.status==="done"?"selected":""}>Завершено</option>
+      <option value="done" ${c.status==="done"?"selected":""}>Виконано</option>
     </select>
     <label class="label">Запит клієнта</label><textarea id="detailRequest">${cleanText(c.request)}</textarea>
     <label class="label">Внутрішня нотатка</label><textarea id="detailNote">${cleanText(c.note)}</textarea>
@@ -210,6 +213,7 @@ function openClient(id){
         <button class="mini" onclick="sendPaymentDetails('${c.id}', 199)">💳 Реквізити 199 грн</button>
         <button class="mini" onclick="sendPaymentDetails('${c.id}', 699)">💳 Реквізити 699 грн</button>
         <button class="mini" onclick="sendPaymentDetails('${c.id}', 1499)">💳 Реквізити 1499 грн</button>
+        <button class="mini" onclick="markConsultationDone('${c.id}')">✅ Консультацію виконано</button>
       </div>
     </div>
     <div class="modal-actions">
@@ -287,6 +291,15 @@ function parseClientMessages(c){
     });
   });
 
+  const doneParts = note.split("--- Консультацію виконано ---").slice(1).map(x => x.trim()).filter(Boolean);
+  doneParts.forEach(text => {
+    messages.push({
+      role: "admin",
+      text: "✅ Консультацію виконано\n" + text,
+      time: formatDate(c.updated_at)
+    });
+  });
+
   return messages;
 }
 
@@ -334,6 +347,45 @@ function escapeHtml(text){
     .replaceAll("'", "&#039;");
 }
 
+
+
+async function markConsultationDone(id){
+  const c = clients.find(x => x.id === id);
+
+  if (!c) {
+    alert("Клієнта не знайдено");
+    return;
+  }
+
+  if (!confirm("Позначити консультацію як виконану?")) {
+    return;
+  }
+
+  try {
+    if (c.telegram_chat_id) {
+      await api("/api/consultation-done", {
+        method: "POST",
+        body: JSON.stringify({
+          telegram_chat_id: c.telegram_chat_id,
+          client_id: c.id
+        })
+      });
+    }
+
+    const oldNote = document.getElementById("detailNote").value || "";
+    document.getElementById("detailNote").value = (oldNote + "\n\n--- Консультацію виконано ---\nКонсультацію позначено як виконану.").trim();
+
+    document.getElementById("detailStatus").value = "done";
+
+    await saveDetail(id);
+    await loadClientChat(id);
+
+    alert("Консультацію позначено як виконану ✅");
+
+  } catch (error) {
+    alert("Помилка: " + error.message);
+  }
+}
 
 async function sendPaymentDetails(id, amount){
   const c = clients.find(x => x.id === id);
