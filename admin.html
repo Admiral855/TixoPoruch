@@ -30,6 +30,17 @@
     .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}.info{background:#fafbff;border:1px solid #eef0f6;border-radius:14px;padding:13px}.info b{display:block;font-size:12px;color:#68718f;margin-bottom:5px}.info span{font-weight:900}
     .label{display:block;font-weight:900;margin:12px 0 7px}.full{width:100%}textarea{width:100%;min-height:100px;resize:vertical}.timeline{margin-top:16px;border-top:1px solid #eef0f6;padding-top:10px}.event{padding:11px 0;border-bottom:1px solid #f0f2f7}.event b{display:block;margin-bottom:4px}.event small{color:#68718f}
     .modal-back{display:none;position:fixed;inset:0;background:rgba(5,8,22,.55);z-index:50;padding:20px}.modal{max-width:620px;margin:55px auto;background:#fff;border-radius:22px;padding:24px;box-shadow:0 30px 90px rgba(0,0,0,.28)}.modal h3{margin:0 0 16px;font-size:24px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.form-grid .wide{grid-column:1/-1}.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:16px}
+
+    .chat-box{margin-top:16px;border-top:1px solid #eef0f6;padding-top:14px}
+    .chat-messages{background:#f8fafc;border:1px solid #e8ecf6;border-radius:16px;padding:12px;max-height:280px;overflow:auto}
+    .chat-msg{padding:10px 12px;border-radius:14px;margin-bottom:10px;max-width:86%;line-height:1.45;font-size:14px;white-space:pre-wrap}
+    .chat-client{background:#fff;border:1px solid #e5e8f3;color:#10162f;margin-right:auto}
+    .chat-admin{background:linear-gradient(90deg,#c238ff,#3b82f6);color:#fff;margin-left:auto}
+    .chat-time{display:block;font-size:11px;opacity:.7;margin-top:5px}
+    .chat-actions{display:flex;gap:10px;justify-content:flex-end;align-items:center;margin-top:10px;flex-wrap:wrap}
+    .reply-row{display:grid;grid-template-columns:1fr auto;gap:10px;margin-top:10px}
+    .reply-row textarea{min-height:54px}
+
     @media(max-width:1150px){.app{grid-template-columns:1fr}.sidebar{height:auto;position:relative}.kpis,.crm-grid,.form-grid,.info-grid{grid-template-columns:1fr}.top,.actions{flex-direction:column;align-items:flex-start}.search,.btn{width:100%}.tablewrap{overflow-x:auto}table{min-width:760px}}
   </style>
 </head>
@@ -177,14 +188,24 @@ function openClient(id){
     </select>
     <label class="label">Запит клієнта</label><textarea id="detailRequest">${c.request||""}</textarea>
     <label class="label">Внутрішня нотатка</label><textarea id="detailNote">${c.note||""}</textarea>
-    <label class="label">Відповідь клієнту в Telegram</label>
-    <textarea id="telegramReplyText" placeholder="Напишіть відповідь клієнту..."></textarea>
+    <div class="chat-box">
+      <div class="head">
+        <h2>Живий чат</h2>
+        <button class="mini" onclick="loadClientChat('${c.id}')">Оновити чат</button>
+      </div>
+      <div class="chat-messages" id="clientChatMessages">Завантаження...</div>
+      <div class="reply-row">
+        <textarea id="telegramReplyText" placeholder="Напишіть відповідь клієнту..."></textarea>
+        <button class="btn" onclick="sendTelegramReply('${c.id}')">Відправити</button>
+      </div>
+    </div>
     <div class="modal-actions">
       <button class="mini red" onclick="deleteClient('${c.id}')">Видалити</button>
-      <button class="btn gray" onclick="sendTelegramReply('${c.id}')">Відправити в Telegram</button>
       <button class="btn" onclick="saveDetail('${c.id}')">Зберегти</button>
     </div>
     <div class="timeline"><h2>Історія</h2><div class="event"><b>Картка у Supabase</b><small>ID: ${c.id}</small></div></div>`;
+
+  loadClientChat(id);
 }
 
 async function saveDetail(id){
@@ -216,6 +237,73 @@ async function addClient(){
     source:"CRM"
   })});
   closeModal(); await loadClients(); if(result.client?.id) openClient(result.client.id);
+}
+
+
+function parseClientMessages(c){
+  const messages = [];
+  const raw = c.request || "";
+
+  if (raw.trim()) {
+    const parts = raw.split("--- Нове повідомлення ---").map(x => x.trim()).filter(Boolean);
+    parts.forEach((text, index) => {
+      messages.push({
+        role: "client",
+        text,
+        time: index === 0 ? formatDate(c.created_at) : formatDate(c.updated_at)
+      });
+    });
+  }
+
+  const note = c.note || "";
+  const replyParts = note.split("--- Відповідь відправлена ---").slice(1).map(x => x.trim()).filter(Boolean);
+  replyParts.forEach(text => {
+    messages.push({
+      role: "admin",
+      text,
+      time: formatDate(c.updated_at)
+    });
+  });
+
+  return messages;
+}
+
+async function loadClientChat(id){
+  try {
+    await loadClients();
+    const c = clients.find(x => x.id === id);
+    const box = document.getElementById("clientChatMessages");
+
+    if (!box || !c) return;
+
+    const messages = parseClientMessages(c);
+
+    if (!messages.length) {
+      box.innerHTML = "Поки немає повідомлень.";
+      return;
+    }
+
+    box.innerHTML = messages.map(m => `
+      <div class="chat-msg ${m.role === "admin" ? "chat-admin" : "chat-client"}">
+        ${escapeHtml(m.text)}
+        <span class="chat-time">${m.role === "admin" ? "Ви" : "Клієнт"} · ${m.time || ""}</span>
+      </div>
+    `).join("");
+
+    box.scrollTop = box.scrollHeight;
+  } catch (error) {
+    const box = document.getElementById("clientChatMessages");
+    if (box) box.innerHTML = "Помилка завантаження чату: " + error.message;
+  }
+}
+
+function escapeHtml(text){
+  return String(text || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
 async function sendTelegramReply(id){
@@ -253,6 +341,7 @@ async function sendTelegramReply(id){
     document.getElementById("detailNote").value = (oldNote + "\\n\\n--- Відповідь відправлена ---\\n" + text).trim();
 
     await saveDetail(id);
+    await loadClientChat(id);
 
     textEl.value = "";
     alert("Відповідь відправлено клієнту ✅");
