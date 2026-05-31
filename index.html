@@ -895,6 +895,7 @@ setLang(localStorage.getItem("tp_lang") || "ua");
     <input id="clientName" placeholder="Ваше імʼя">
     <input id="clientTelegram" placeholder="Ваш Telegram (@username) — обовʼязково">
     <input id="clientPhone" placeholder="Ваш телефон (+380...) — необовʼязково">
+    <p style="font-size:13px;color:#cbd5e1;margin:-4px 0 12px;">Щоб отримати відповідь у Telegram, після заявки відкрийте бот і натисніть Start.</p>
     <select id="clientTariff">
       <option value="Швидкий чат — 199 грн">Швидкий чат — 199 грн</option>
       <option value="Онлайн-консультація в переписці — 699 грн">Онлайн-консультація в переписці — 699 грн</option>
@@ -907,7 +908,7 @@ setLang(localStorage.getItem("tp_lang") || "ua");
       <button type="button" class="btn btn-primary" onclick="sendRequest()">Надіслати заявку</button>
     </div>
     <div class="request-status" id="requestStatus"></div>
-    <a id="telegramAfterSubmit" href="https://t.me/tihoporuch_support_bot" target="_blank" class="btn btn-primary" style="display:none;width:100%;margin-top:14px;text-align:center;">Відкрити Telegram</a>
+    <a id="telegramAfterSubmit" href="https://t.me/tihoporuch_support_bot" target="_blank" class="btn btn-primary" style="display:none;width:100%;margin-top:14px;text-align:center;">Відкрити Telegram-бот</a>
   </div>
 </div>
 
@@ -956,7 +957,7 @@ async function sendRequest(){
     const data = await response.json();
 
     if(data.ok){
-      status.innerHTML = "Дякуємо 💜 Заявку відправлено.<br>Щоб отримати відповідь швидше — відкрийте наш Telegram-бот.";
+      status.innerHTML = "Дякуємо 💜 Заявку відправлено.<br><br><b>Важливо:</b> щоб ми могли відповісти вам у Telegram автоматично, відкрийте наш Telegram-бот і натисніть <b>Start</b>.";
       const tgBtn = document.getElementById("telegramAfterSubmit");
       if (tgBtn) tgBtn.style.display = "inline-flex";
       document.getElementById("clientName").value = "";
