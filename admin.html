@@ -254,6 +254,9 @@ function openClient(id){
         <button class="btn" onclick="sendTelegramReply('${c.id}')">Відправити</button>
       </div>
       <div class="chat-actions">
+        <button class="mini" onclick="suggestReply('${c.id}')">✨ Запропонувати відповідь</button>
+      </div>
+      <div class="chat-actions">
         <button class="mini" onclick="sendPaymentDetails('${c.id}', 199)">💳 Реквізити 199 грн</button>
         <button class="mini" onclick="sendPaymentDetails('${c.id}', 699)">💳 Реквізити 699 грн</button>
         <button class="mini" onclick="sendPaymentDetails('${c.id}', 1499)">💳 Реквізити 1499 грн</button>
@@ -442,6 +445,110 @@ async function markConsultationDone(id){
   }
 }
 
+
+
+function getLastClientMessage(c){
+  const raw = c.request || "";
+  const parts = raw.split("--- Нове повідомлення ---").map(x => x.trim()).filter(Boolean);
+  return parts.length ? parts[parts.length - 1] : raw.trim();
+}
+
+function buildSuggestedReply(message){
+  const text = String(message || "").toLowerCase();
+
+  if (text.includes("тривог") || text.includes("тревог") || text.includes("панік") || text.includes("паник")) {
+    return `Дякую, що написали 💜
+
+Розумію, що тривога може дуже виснажувати, особливо коли вона накопичується і важко самостійно заспокоїтися.
+
+Давайте спробуємо розібратися мʼяко і без тиску:
+1. Коли найчастіше посилюється тривога?
+2. Чи є зараз конкретна ситуація, яка її запускає?
+3. Що ви вже пробували, щоб стало легше?
+
+Я поруч і готовий/готова допомогти вам поступово розкласти це по поличках.`;
+  }
+
+  if (text.includes("сон") || text.includes("спати") || text.includes("бессон") || text.includes("безсон")) {
+    return `Дякую, що поділилися 💜
+
+Проблеми зі сном часто повʼязані з перенапруженням, тривогою або внутрішнім виснаженням. Це не означає, що з вами щось “не так” — просто психіці зараз може бути важко розслабитися.
+
+Щоб краще зрозуміти ситуацію, напишіть, будь ласка:
+1. Скільки часу це триває?
+2. Ви не можете заснути чи прокидаєтесь серед ночі?
+3. Які думки найчастіше приходять перед сном?`;
+  }
+
+  if (text.includes("стрес") || text.includes("робот") || text.includes("устал") || text.includes("втом")) {
+    return `Розумію вас 💜
+
+Схоже, зараз у вас може бути стан сильного напруження або втоми. Коли стрес накопичується, навіть прості речі можуть здаватися важкими.
+
+Давайте почнемо з малого:
+1. Що зараз найбільше забирає сили?
+2. Чи є можливість хоча б трохи зменшити навантаження?
+3. Вам більше хочеться виговоритися чи знайти конкретний план дій?`;
+  }
+
+  if (text.includes("отнош") || text.includes("віднос") || text.includes("пара") || text.includes("чолов") || text.includes("дівч")) {
+    return `Дякую, що написали 💜
+
+Теми стосунків часто дуже болючі, бо там багато емоцій, очікувань і невисловлених переживань.
+
+Щоб я краще зрозумів/зрозуміла ситуацію, напишіть:
+1. Що саме сталося?
+2. Що вас зараз найбільше ранить?
+3. Якого результату ви б хотіли — поговорити, зрозуміти себе чи прийняти рішення?`;
+  }
+
+  if (text.includes("оплат") || text.includes("квитан") || text.includes("реквіз")) {
+    return `Дякуємо 💜
+
+Ми перевіримо оплату / квитанцію та повідомимо вас у цьому чаті. Якщо потрібно — після підтвердження одразу узгодимо зручний час консультації.`;
+  }
+
+  if (text.includes("запис") || text.includes("консультац") || text.includes("час") || text.includes("коли")) {
+    return `Так, можемо узгодити консультацію 💜
+
+Напишіть, будь ласка, який формат вам зручніший:
+1. Переписка
+2. Відеоконсультація
+3. Швидкий чат
+
+І кілька зручних для вас часових проміжків.`;
+  }
+
+  return `Дякую, що написали 💜
+
+Я уважно прочитав/прочитала ваше повідомлення. Можемо розібрати ситуацію спокійно, без осуду і тиску.
+
+Напишіть, будь ласка, трохи детальніше:
+1. Що саме вас зараз турбує найбільше?
+2. Як давно це триває?
+3. Якої підтримки ви очікуєте зараз — просто виговоритися чи знайти конкретне рішення?`;
+}
+
+function suggestReply(id){
+  const c = clients.find(x => x.id === id);
+
+  if (!c) {
+    alert("Клієнта не знайдено");
+    return;
+  }
+
+  const replyBox = document.getElementById("telegramReplyText");
+  if (!replyBox) {
+    alert("Поле відповіді не знайдено");
+    return;
+  }
+
+  const lastMessage = getLastClientMessage(c);
+  replyBox.value = buildSuggestedReply(lastMessage);
+  replyBox.focus();
+
+  alert("Відповідь підготовлено ✨ Можете відредагувати перед відправкою.");
+}
 
 async function sendReminder(id, type){
   const c = clients.find(x => x.id === id);
