@@ -24,7 +24,7 @@
     .crm-grid{display:grid;grid-template-columns:1.2fr .85fr;gap:18px}.head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}h2{font-size:21px;margin:0}
     table{width:100%;border-collapse:collapse}th{text-align:left;color:#68718f;font-size:13px;padding:12px 8px;border-bottom:1px solid #eef0f6}td{padding:14px 8px;border-bottom:1px solid #f0f2f7;font-size:14px;vertical-align:middle}
     .client{display:flex;align-items:center;gap:10px;font-weight:900}.ava{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,#c238ff,#3b82f6);font-weight:900;flex:0 0 auto}
-    .chip{display:inline-flex;padding:7px 10px;border-radius:999px;font-size:12px;font-weight:900}.new{background:#e0f2fe;color:#0369a1}.work{background:#fef3c7;color:#92400e}.paid{background:#dcfce7;color:#166534}.done{background:#ede9fe;color:#6d28d9}
+    .chip{display:inline-flex;padding:7px 10px;border-radius:999px;font-size:12px;font-weight:900}.new{background:#e0f2fe;color:#0369a1}.work{background:#fef3c7;color:#92400e}.waiting_payment{background:#fff7ed;color:#c2410c}.paid{background:#dcfce7;color:#166534}.done{background:#ede9fe;color:#6d28d9}
     .mini{height:34px;border:1px solid #e2e5f0;background:#fafbff;color:#6d28d9;border-radius:9px;padding:0 12px;font-weight:900;cursor:pointer}.mini.red{color:#dc2626}
     .detail-empty{min-height:430px;display:grid;place-items:center;text-align:center;color:#68718f}.profile{display:flex;gap:14px;align-items:center;margin-bottom:18px}.profile .ava{width:56px;height:56px}.profile h3{margin:0 0 4px;font-size:24px}.profile p{margin:0;color:#68718f}
     .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}.info{background:#fafbff;border:1px solid #eef0f6;border-radius:14px;padding:13px}.info b{display:block;font-size:12px;color:#68718f;margin-bottom:5px}.info span{font-weight:900}
@@ -68,7 +68,7 @@
       <div><h1>CRM клієнтів</h1><p class="muted">Заявки, статуси, нотатки та історія спілкування в одному місці.</p></div>
       <div class="actions">
         <input class="search" id="searchInput" placeholder="Пошук клієнта, Telegram, запиту..." oninput="renderClients()">
-        <select id="statusFilter" onchange="renderClients()"><option value="">Усі статуси</option><option value="new">Нова</option><option value="work">В роботі</option><option value="paid">Оплачено</option><option value="done">Завершено</option></select>
+        <select id="statusFilter" onchange="renderClients()"><option value="">Усі статуси</option><option value="new">Нова</option><option value="work">В роботі</option><option value="waiting_payment">Очікує оплату</option><option value="paid">Оплачено</option><option value="done">Завершено</option></select>
         <button class="btn light" onclick="openModal()">+ Додати заявку</button>
       </div>
     </section>
@@ -102,7 +102,7 @@
       <input class="input" id="newName" placeholder="Імʼя">
       <input class="input" id="newContact" placeholder="Telegram / телефон">
       <select id="newTariff"><option>Швидкий чат — 199 грн</option><option>Онлайн-консультація в переписці — 699 грн</option><option>Відеоконсультація + переписка — 1499 грн</option></select>
-      <select id="newStatus"><option value="new">Нова</option><option value="work">В роботі</option><option value="paid">Оплачено</option><option value="done">Завершено</option></select>
+      <select id="newStatus"><option value="new">Нова</option><option value="work">В роботі</option><option value="waiting_payment">Очікує оплату</option><option value="paid">Оплачено</option><option value="done">Завершено</option></select>
       <textarea class="wide" id="newRequest" placeholder="Запит клієнта"></textarea>
       <textarea class="wide" id="newNote" placeholder="Внутрішня нотатка"></textarea>
     </div>
@@ -124,8 +124,8 @@ function adminLogout(){localStorage.removeItem("tp_admin_logged");location.reloa
 if(localStorage.getItem("tp_admin_logged")==="yes") showAdmin();
 
 function formatDate(value){try{return value ? new Date(value).toLocaleString("uk-UA",{timeZone:"Europe/Kyiv"}) : ""}catch(e){return value||""}}
-function statusLabel(s){return {new:"Нова",work:"В роботі",paid:"Оплачено",done:"Завершено"}[s]||s}
-function statusClass(s){return {new:"new",work:"work",paid:"paid",done:"done"}[s]||"new"}
+function statusLabel(s){return {new:"Нова",work:"В роботі",waiting_payment:"Очікує оплату",paid:"Оплачено",done:"Завершено"}[s]||s}
+function statusClass(s){return {new:"new",work:"work",waiting_payment:"waiting_payment",paid:"paid",done:"done"}[s]||"new"}
 function initials(n){return (n||"?").trim().charAt(0).toUpperCase()}
 
 async function api(path, options={}){
@@ -183,6 +183,7 @@ function openClient(id){
     <select class="full" id="detailStatus">
       <option value="new" ${c.status==="new"?"selected":""}>Нова</option>
       <option value="work" ${c.status==="work"?"selected":""}>В роботі</option>
+      <option value="waiting_payment" ${c.status==="waiting_payment"?"selected":""}>Очікує оплату</option>
       <option value="paid" ${c.status==="paid"?"selected":""}>Оплачено</option>
       <option value="done" ${c.status==="done"?"selected":""}>Завершено</option>
     </select>
@@ -197,6 +198,11 @@ function openClient(id){
       <div class="reply-row">
         <textarea id="telegramReplyText" placeholder="Напишіть відповідь клієнту..."></textarea>
         <button class="btn" onclick="sendTelegramReply('${c.id}')">Відправити</button>
+      </div>
+      <div class="chat-actions">
+        <button class="mini" onclick="sendPaymentDetails('${c.id}', 199)">💳 Реквізити 199 грн</button>
+        <button class="mini" onclick="sendPaymentDetails('${c.id}', 699)">💳 Реквізити 699 грн</button>
+        <button class="mini" onclick="sendPaymentDetails('${c.id}', 1499)">💳 Реквізити 1499 грн</button>
       </div>
     </div>
     <div class="modal-actions">
@@ -265,6 +271,15 @@ function parseClientMessages(c){
     });
   });
 
+  const paymentParts = note.split("--- Реквізити відправлені ---").slice(1).map(x => x.trim()).filter(Boolean);
+  paymentParts.forEach(text => {
+    messages.push({
+      role: "admin",
+      text: "💳 Реквізити на оплату відправлені\n" + text,
+      time: formatDate(c.updated_at)
+    });
+  });
+
   return messages;
 }
 
@@ -304,6 +319,49 @@ function escapeHtml(text){
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+
+async function sendPaymentDetails(id, amount){
+  const c = clients.find(x => x.id === id);
+
+  if (!c) {
+    alert("Клієнта не знайдено");
+    return;
+  }
+
+  if (!c.telegram_chat_id) {
+    alert("У цього клієнта немає Telegram Chat ID. Реквізити можна надіслати тільки клієнтам, які писали в Telegram-бот.");
+    return;
+  }
+
+  if (!confirm("Надіслати клієнту реквізити на " + amount + " грн?")) {
+    return;
+  }
+
+  try {
+    await api("/api/send-payment-details", {
+      method: "POST",
+      body: JSON.stringify({
+        telegram_chat_id: c.telegram_chat_id,
+        amount: amount,
+        client_id: c.id
+      })
+    });
+
+    const oldNote = document.getElementById("detailNote").value || "";
+    document.getElementById("detailNote").value = (oldNote + "\\n\\n--- Реквізити відправлені ---\\nСума: " + amount + " грн").trim();
+
+    document.getElementById("detailStatus").value = "waiting_payment";
+
+    await saveDetail(id);
+    await loadClientChat(id);
+
+    alert("Реквізити відправлено клієнту ✅");
+
+  } catch (error) {
+    alert("Помилка відправки реквізитів: " + error.message);
+  }
 }
 
 async function sendTelegramReply(id){
