@@ -179,6 +179,30 @@ function statusLabel(s){return {new:"Нова",work:"В роботі",waiting_pa
 function statusClass(s){return {new:"new",work:"work",waiting_payment:"waiting_payment",paid:"paid",done:"done"}[s]||"new"}
 function initials(n){return (n||"?").trim().charAt(0).toUpperCase()}
 
+function getTelegramUsername(c){
+  const text = ((c.contact || "") + " " + (c.note || "")).match(/@[A-Za-z0-9_]{5,32}/);
+  return text ? text[0] : "";
+}
+
+function openTelegramProfile(id){
+  const c = clients.find(x => x.id === id);
+  if(!c){ alert("Клієнта не знайдено"); return; }
+
+  const username = getTelegramUsername(c);
+
+  if(!username){
+    alert("У клієнта не вказано Telegram username. Є тільки телефон або інший контакт.");
+    return;
+  }
+
+  window.open("https://t.me/" + username.replace("@", ""), "_blank");
+}
+
+function explainNoChatId(){
+  alert("У цього клієнта немає Telegram Chat ID.\\n\\nЦе нормально, якщо він залишив заявку тільки на сайті.\\n\\nЩоб CRM могла писати йому в Telegram автоматично, клієнт має відкрити @tihoporuch_support_bot і натиснути Start.");
+}
+
+
 function getClientAmount(c){
   const text = ((c.tariff || "") + " " + (c.note || "") + " " + (c.request || "")).toLowerCase();
 
@@ -297,6 +321,8 @@ function openClient(id){
   if(!c)return;
   document.getElementById("detailCard").innerHTML=`
     <div class="profile"><span class="ava">${initials(c.name)}</span><div><h3>${c.name||"Без імені"}</h3><p>${c.contact||""}</p></div></div>
+    ${!c.telegram_chat_id && getTelegramUsername(c) ? `<div class="chat-actions" style="justify-content:flex-start;margin:0 0 14px;"><button class="mini" onclick="openTelegramProfile('${c.id}')">🔗 Відкрити Telegram профіль</button><button class="mini" onclick="explainNoChatId()">ℹ️ Чому не можна написати з CRM?</button></div>` : ""}
+    ${!c.telegram_chat_id && !getTelegramUsername(c) ? `<div class="chat-actions" style="justify-content:flex-start;margin:0 0 14px;"><button class="mini" onclick="explainNoChatId()">ℹ️ Немає Telegram Chat ID</button></div>` : ""}
     <div class="info-grid">
       <div class="info"><b>Тариф</b><span>${c.tariff||""}</span></div>
       <div class="info"><b>Статус</b><span class="chip ${statusClass(c.status)}">${statusLabel(c.status||"new")}</span></div>
@@ -668,7 +694,7 @@ async function sendReminder(id, type){
   }
 
   if (!c.telegram_chat_id) {
-    alert("У цього клієнта немає Telegram Chat ID.");
+    explainNoChatId();
     return;
   }
 
@@ -715,7 +741,7 @@ async function confirmPayment(id){
   }
 
   if (!c.telegram_chat_id) {
-    alert("У цього клієнта немає Telegram Chat ID.");
+    explainNoChatId();
     return;
   }
 
@@ -756,7 +782,7 @@ async function sendPaymentDetails(id, amount){
   }
 
   if (!c.telegram_chat_id) {
-    alert("У цього клієнта немає Telegram Chat ID. Реквізити можна надіслати тільки клієнтам, які писали в Telegram-бот.");
+    explainNoChatId();
     return;
   }
 
@@ -798,7 +824,7 @@ async function sendTelegramReply(id){
   }
 
   if (!c.telegram_chat_id) {
-    alert("У цього клієнта немає Telegram Chat ID. Відповідь можна надіслати тільки клієнтам, які писали в Telegram-бот.");
+    explainNoChatId();
     return;
   }
 
@@ -839,7 +865,7 @@ async function sendTelegramReply(id){
 async function saveSchedule(id){
   const c = clients.find(x => x.id === id);
   if(!c){ alert("Клієнта не знайдено"); return; }
-  if(!c.telegram_chat_id){ alert("У клієнта немає Telegram Chat ID."); return; }
+  if(!c.telegram_chat_id){ explainNoChatId(); return; }
 
   const date = document.getElementById("scheduleDate").value;
   const time = document.getElementById("scheduleTime").value;
@@ -878,7 +904,7 @@ async function saveSchedule(id){
 async function sendUpcomingReminder(id){
   const c = clients.find(x => x.id === id);
   if(!c){ alert("Клієнта не знайдено"); return; }
-  if(!c.telegram_chat_id){ alert("У клієнта немає Telegram Chat ID."); return; }
+  if(!c.telegram_chat_id){ explainNoChatId(); return; }
 
   try{
     await api("/api/send-reminder", {
