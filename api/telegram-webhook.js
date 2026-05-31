@@ -46,6 +46,76 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  async function findClientByTelegramChatId(telegramChatId){
+    const url = process.env.SUPABASE_URL;
+    const key = process.env.SUPABASE_ANON_KEY;
+
+    if (!url || !key) {
+      console.log("Supabase env vars are missing");
+      return null;
+    }
+
+    const endpoint = `${url}/rest/v1/clients?telegram_chat_id=eq.${encodeURIComponent(String(telegramChatId))}&select=*&limit=1`;
+    const r = await fetch(endpoint, {
+      headers:{
+        "apikey": key,
+        "Authorization": `Bearer ${key}`,
+        "Content-Type": "application/json"
+      }
+    });
+
+    const data = await r.json().catch(() => []);
+
+    if (!r.ok || !Array.isArray(data) || !data.length) {
+      return null;
+    }
+
+    return data[0];
+  }
+
+  async function updateClientById(id, payload){
+    const url = process.env.SUPABASE_URL;
+    const key = process.env.SUPABASE_ANON_KEY;
+
+    if (!url || !key || !id) {
+      return null;
+    }
+
+    const endpoint = `${url}/rest/v1/clients?id=eq.${encodeURIComponent(String(id))}`;
+    const r = await fetch(endpoint, {
+      method:"PATCH",
+      headers:{
+        "apikey": key,
+        "Authorization": `Bearer ${key}`,
+        "Content-Type": "application/json",
+        "Prefer": "return=representation"
+      },
+      body:JSON.stringify({
+        ...payload,
+        updated_at:new Date().toISOString()
+      })
+    });
+
+    const data = await r.json().catch(() => []);
+
+    if (!r.ok) {
+      console.log("Supabase update error:", data);
+      return null;
+    }
+
+    return Array.isArray(data) ? data[0] : data;
+  }
+
+  async function updateClientByTelegramChatId(telegramChatId, payload){
+    const client = await findClientByTelegramChatId(telegramChatId);
+
+    if (!client) {
+      return null;
+    }
+
+    return updateClientById(client.id, payload);
+  }
+
   function info(user, chat){
     return {
       firstName: user?.first_name || chat?.first_name || "Користувач",
@@ -78,6 +148,57 @@ module.exports = async function handler(req, res) {
         adminChatId,
         `✍️ Режим відповіді клієнту\n\nСкопіюйте та відправте команду:\n/reply ${target} Ваш текст відповіді`
       );
+      return res.status(200).json({ok:true});
+    }
+
+
+    if (data.startsWith("confirm_payment_")) {
+      const target = data.replace("confirm_payment_", "");
+
+      const client = await findClientByTelegramChatId(target);
+      const oldNote = client?.note || "";
+      const updatedNote = (oldNote + "\n\n--- Оплату підтверджено ---\nОплату підтверджено адміністратором у Telegram.").trim();
+
+      await updateClientByTelegramChatId(target, {
+        status:"paid",
+        note:updatedNote
+      });
+
+      await sendMessage(
+        target,
+        "✅ Оплату підтверджено.\n\nДякуємо 💜\nНайближчим часом ми зв'яжемося з вами щодо консультації."
+      );
+
+      await sendMessage(
+        adminChatId,
+        `✅ Оплату підтверджено\n\n🆔 Chat ID: ${target}\nCRM оновлено: статус → Оплачено`
+      );
+
+      return res.status(200).json({ok:true});
+    }
+
+    if (data.startsWith("reject_payment_")) {
+      const target = data.replace("reject_payment_", "");
+
+      const client = await findClientByTelegramChatId(target);
+      const oldNote = client?.note || "";
+      const updatedNote = (oldNote + "\n\n--- Оплату відхилено ---\nОплату відхилено адміністратором у Telegram.").trim();
+
+      await updateClientByTelegramChatId(target, {
+        status:"waiting_payment",
+        note:updatedNote
+      });
+
+      await sendMessage(
+        target,
+        "❌ Ми поки не змогли підтвердити оплату.\n\nБудь ласка, перевірте квитанцію або напишіть нам у цей чат."
+      );
+
+      await sendMessage(
+        adminChatId,
+        `❌ Оплату відхилено\n\n🆔 Chat ID: ${target}\nCRM оновлено: статус → Очікує оплату`
+      );
+
       return res.status(200).json({ok:true});
     }
 
@@ -200,8 +321,28 @@ ${caption || "Без коментаря"}`;
 
     await sendMessage(
       adminChatId,
-      `📎 Квитанція додана в CRM\n\n👤 Імʼя: ${firstName}\n🔗 Username: ${username}\n🆔 Chat ID: ${userChatId}`,
-      { reply_markup:{ inline_keyboard:[[ {text:"✉️ Відповісти клієнту", callback_data:`reply_to_${userChatId}`} ]] } }
+      `📎 Квитанція додана в CRM
+
+👤 Імʼя: ${firstName}
+🔗 Username: ${username}
+🆔 Chat ID: ${userChatId}
+
+Очікує підтвердження оплати`,
+      {
+        reply_markup:{
+          inline_keyboard:[
+            [
+              { text:"✅ Підтвердити оплату", callback_data:`confirm_payment_${userChatId}` }
+            ],
+            [
+              { text:"❌ Відхилити", callback_data:`reject_payment_${userChatId}` }
+            ],
+            [
+              { text:"✉️ Відповісти клієнту", callback_data:`reply_to_${userChatId}` }
+            ]
+          ]
+        }
+      }
     );
 
     await sendMessage(
