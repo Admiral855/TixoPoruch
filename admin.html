@@ -95,7 +95,7 @@
       <textarea class="wide" id="newRequest" placeholder="Запит клієнта"></textarea>
       <textarea class="wide" id="newNote" placeholder="Внутрішня нотатка"></textarea>
     </div>
-    <div class="modal-actions"><button class="btn gray" onclick="closeModal()">Скасувати</button><button type="button" class="btn" id="saveClientBtn">Зберегти</button></div>
+    <div class="modal-actions"><button class="btn gray" onclick="closeModal()">Скасувати</button><button class="btn" onclick="addClient()">Зберегти</button></div>
   </div>
 </div>
 
@@ -177,7 +177,13 @@ function openClient(id){
     </select>
     <label class="label">Запит клієнта</label><textarea id="detailRequest">${c.request||""}</textarea>
     <label class="label">Внутрішня нотатка</label><textarea id="detailNote">${c.note||""}</textarea>
-    <div class="modal-actions"><button class="mini red" onclick="deleteClient('${c.id}')">Видалити</button><button class="btn" onclick="saveDetail('${c.id}')">Зберегти</button></div>
+    <label class="label">Відповідь клієнту в Telegram</label>
+    <textarea id="telegramReplyText" placeholder="Напишіть відповідь клієнту..."></textarea>
+    <div class="modal-actions">
+      <button class="mini red" onclick="deleteClient('${c.id}')">Видалити</button>
+      <button class="btn gray" onclick="sendTelegramReply('${c.id}')">Відправити в Telegram</button>
+      <button class="btn" onclick="saveDetail('${c.id}')">Зберегти</button>
+    </div>
     <div class="timeline"><h2>Історія</h2><div class="event"><b>Картка у Supabase</b><small>ID: ${c.id}</small></div></div>`;
 }
 
@@ -199,73 +205,65 @@ async function deleteClient(id){
 function openModal(){document.getElementById("modal").style.display="block"}
 function closeModal(){document.getElementById("modal").style.display="none"}
 async function addClient(){
-  const btn = document.getElementById("saveClientBtn");
+  const name=document.getElementById("newName").value.trim(), contact=document.getElementById("newContact").value.trim();
+  if(!name||!contact){alert("Заповніть імʼя та контакт");return}
+  const result = await api("/api/clients", {method:"POST", body:JSON.stringify({
+    name, contact,
+    tariff:document.getElementById("newTariff").value,
+    status:document.getElementById("newStatus").value,
+    request:document.getElementById("newRequest").value,
+    note:document.getElementById("newNote").value,
+    source:"CRM"
+  })});
+  closeModal(); await loadClients(); if(result.client?.id) openClient(result.client.id);
+}
+
+async function sendTelegramReply(id){
+  const c = clients.find(x => x.id === id);
+
+  if (!c) {
+    alert("Клієнта не знайдено");
+    return;
+  }
+
+  if (!c.telegram_chat_id) {
+    alert("У цього клієнта немає Telegram Chat ID. Відповідь можна надіслати тільки клієнтам, які писали в Telegram-бот.");
+    return;
+  }
+
+  const textEl = document.getElementById("telegramReplyText");
+  const text = textEl.value.trim();
+
+  if (!text) {
+    alert("Напишіть текст відповіді");
+    return;
+  }
 
   try {
-    if (btn) {
-      btn.disabled = true;
-      btn.textContent = "Зберігаємо...";
-    }
-
-    const name = document.getElementById("newName").value.trim();
-    const contact = document.getElementById("newContact").value.trim();
-
-    if (!name) {
-      alert("Вкажіть імʼя");
-      return;
-    }
-
-    if (!contact) {
-      alert("Вкажіть контакт");
-      return;
-    }
-
-    const payload = {
-      name: name,
-      contact: contact,
-      tariff: document.getElementById("newTariff").value,
-      status: document.getElementById("newStatus").value,
-      request: document.getElementById("newRequest").value,
-      note: document.getElementById("newNote").value,
-      source: "CRM"
-    };
-
-    const result = await api("/api/clients", {
+    await api("/api/send-client-message", {
       method: "POST",
-      body: JSON.stringify(payload)
+      body: JSON.stringify({
+        telegram_chat_id: c.telegram_chat_id,
+        text: text,
+        client_id: c.id
+      })
     });
 
-    document.getElementById("newName").value = "";
-    document.getElementById("newContact").value = "";
-    document.getElementById("newRequest").value = "";
-    document.getElementById("newNote").value = "";
+    const oldNote = document.getElementById("detailNote").value || "";
+    document.getElementById("detailNote").value = (oldNote + "\\n\\n--- Відповідь відправлена ---\\n" + text).trim();
 
-    closeModal();
-    await loadClients();
+    await saveDetail(id);
 
-    if (result.client && result.client.id) {
-      openClient(result.client.id);
-    }
-
-    alert("Заявку збережено ✅");
+    textEl.value = "";
+    alert("Відповідь відправлено клієнту ✅");
 
   } catch (error) {
-    console.error("SAVE CLIENT ERROR:", error);
-    alert("Помилка збереження: " + error.message);
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = "Зберегти";
-    }
+    alert("Помилка відправки: " + error.message);
   }
 }
+
+
 document.getElementById("modal").addEventListener("click",e=>{if(e.target.id==="modal")closeModal()});
-
-const saveClientButton = document.getElementById("saveClientBtn");
-if (saveClientButton) {
-  saveClientButton.addEventListener("click", addClient);
-}
-
 document.addEventListener("keydown",e=>{if(e.key==="Enter"&&document.body.classList.contains("locked"))adminLogin()});
 </script>
 </body>
