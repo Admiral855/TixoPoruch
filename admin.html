@@ -203,8 +203,6 @@ function openClient(id){
         <button class="mini" onclick="sendPaymentDetails('${c.id}', 199)">💳 Реквізити 199 грн</button>
         <button class="mini" onclick="sendPaymentDetails('${c.id}', 699)">💳 Реквізити 699 грн</button>
         <button class="mini" onclick="sendPaymentDetails('${c.id}', 1499)">💳 Реквізити 1499 грн</button>
-        <button class="mini" onclick="confirmPayment('${c.id}')">✅ Підтвердити оплату</button>
-        <button class="mini" onclick="openSchedulePrompt('${c.id}')">📅 Записати</button>
       </div>
     </div>
     <div class="modal-actions">
@@ -282,24 +280,6 @@ function parseClientMessages(c){
     });
   });
 
-  const paidParts = note.split("--- Оплату підтверджено ---").slice(1).map(x => x.trim()).filter(Boolean);
-  paidParts.forEach(text => {
-    messages.push({
-      role: "admin",
-      text: "✅ Оплату підтверджено\n" + text,
-      time: formatDate(c.updated_at)
-    });
-  });
-
-  const scheduleParts = note.split("--- Запис на консультацію ---").slice(1).map(x => x.trim()).filter(Boolean);
-  scheduleParts.forEach(text => {
-    messages.push({
-      role: "admin",
-      text: "📅 Запис на консультацію\n" + text,
-      time: formatDate(c.updated_at)
-    });
-  });
-
   return messages;
 }
 
@@ -332,8 +312,14 @@ async function loadClientChat(id){
   }
 }
 
-function escapeHtml(text){
+function normalizeChatText(text){
   return String(text || "")
+    .replaceAll("\\n", "\n")
+    .replaceAll("\\t", " ");
+}
+
+function escapeHtml(text){
+  return normalizeChatText(text)
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
@@ -341,97 +327,6 @@ function escapeHtml(text){
     .replaceAll("'", "&#039;");
 }
 
-
-
-async function confirmPayment(id){
-  const c = clients.find(x => x.id === id);
-
-  if (!c) {
-    alert("Клієнта не знайдено");
-    return;
-  }
-
-  if (!c.telegram_chat_id) {
-    alert("У цього клієнта немає Telegram Chat ID.");
-    return;
-  }
-
-  if (!confirm("Підтвердити оплату клієнта?")) {
-    return;
-  }
-
-  try {
-    await api("/api/confirm-payment", {
-      method: "POST",
-      body: JSON.stringify({
-        telegram_chat_id: c.telegram_chat_id,
-        client_id: c.id
-      })
-    });
-
-    const oldNote = document.getElementById("detailNote").value || "";
-    document.getElementById("detailNote").value = (oldNote + "\\n\\n--- Оплату підтверджено ---\\nКлієнту надіслано підтвердження оплати.").trim();
-
-    document.getElementById("detailStatus").value = "paid";
-
-    await saveDetail(id);
-    await loadClientChat(id);
-
-    alert("Оплату підтверджено ✅");
-
-  } catch (error) {
-    alert("Помилка підтвердження оплати: " + error.message);
-  }
-}
-
-async function openSchedulePrompt(id){
-  const c = clients.find(x => x.id === id);
-
-  if (!c) {
-    alert("Клієнта не знайдено");
-    return;
-  }
-
-  if (!c.telegram_chat_id) {
-    alert("У цього клієнта немає Telegram Chat ID.");
-    return;
-  }
-
-  const date = prompt("Введіть дату консультації, наприклад: 15 червня");
-  if (!date) return;
-
-  const time = prompt("Введіть час консультації, наприклад: 18:00");
-  if (!time) return;
-
-  const format = prompt("Формат консультації: переписка / відео / швидкий чат", "онлайн");
-  if (!format) return;
-
-  try {
-    await api("/api/send-schedule", {
-      method: "POST",
-      body: JSON.stringify({
-        telegram_chat_id: c.telegram_chat_id,
-        date,
-        time,
-        format,
-        client_id: c.id
-      })
-    });
-
-    const oldNote = document.getElementById("detailNote").value || "";
-    document.getElementById("detailNote").value = (oldNote + "\\n\\n--- Запис на консультацію ---\\nДата: " + date + "\\nЧас: " + time + "\\nФормат: " + format).trim();
-
-    document.getElementById("detailStatus").value = "work";
-
-    await saveDetail(id);
-    await loadClientChat(id);
-
-    alert("Клієнта записано на консультацію ✅");
-
-  } catch (error) {
-    alert("Помилка запису: " + error.message);
-  }
-}
 
 async function sendPaymentDetails(id, amount){
   const c = clients.find(x => x.id === id);
@@ -461,7 +356,7 @@ async function sendPaymentDetails(id, amount){
     });
 
     const oldNote = document.getElementById("detailNote").value || "";
-    document.getElementById("detailNote").value = (oldNote + "\\n\\n--- Реквізити відправлені ---\\nСума: " + amount + " грн").trim();
+    document.getElementById("detailNote").value = (oldNote + "\n\n--- Реквізити відправлені ---\nСума: " + amount + " грн").trim();
 
     document.getElementById("detailStatus").value = "waiting_payment";
 
@@ -507,7 +402,7 @@ async function sendTelegramReply(id){
     });
 
     const oldNote = document.getElementById("detailNote").value || "";
-    document.getElementById("detailNote").value = (oldNote + "\\n\\n--- Відповідь відправлена ---\\n" + text).trim();
+    document.getElementById("detailNote").value = (oldNote + "\n\n--- Відповідь відправлена ---\n" + text).trim();
 
     await saveDetail(id);
     await loadClientChat(id);
