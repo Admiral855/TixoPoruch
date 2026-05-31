@@ -893,7 +893,8 @@ setLang(localStorage.getItem("tp_lang") || "ua");
     <p>Заповніть форму — заявка прийде нам у Telegram.</p>
 
     <input id="clientName" placeholder="Ваше імʼя">
-    <input id="clientTelegram" placeholder="Ваш Telegram / телефон">
+    <input id="clientTelegram" placeholder="Ваш Telegram (@username) — обовʼязково">
+    <input id="clientPhone" placeholder="Ваш телефон (+380...) — необовʼязково">
     <select id="clientTariff">
       <option value="Швидкий чат — 199 грн">Швидкий чат — 199 грн</option>
       <option value="Онлайн-консультація в переписці — 699 грн">Онлайн-консультація в переписці — 699 грн</option>
@@ -928,12 +929,18 @@ function closeRequestModal(){
 async function sendRequest(){
   const status = document.getElementById("requestStatus");
   const name = document.getElementById("clientName").value.trim();
-  const contact = document.getElementById("clientTelegram").value.trim();
+  const telegram = document.getElementById("clientTelegram").value.trim();
+  const phone = document.getElementById("clientPhone").value.trim();
   const tariff = document.getElementById("clientTariff").value;
   const message = document.getElementById("clientMessage").value.trim();
 
-  if(!name || !contact){
-    status.textContent = "Заповніть імʼя та контакт.";
+  if(!name || !telegram){
+    status.textContent = "Заповніть імʼя та Telegram.";
+    return;
+  }
+
+  if(!telegram.startsWith("@")){
+    status.textContent = "Telegram має починатися з @. Наприклад: @username.";
     return;
   }
 
@@ -943,7 +950,7 @@ async function sendRequest(){
     const response = await fetch("/api/send-telegram", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({name, contact, tariff, message, page: window.location.href})
+      body: JSON.stringify({name, telegram, phone, tariff, message, page: window.location.href})
     });
 
     const data = await response.json();
@@ -954,6 +961,7 @@ async function sendRequest(){
       if (tgBtn) tgBtn.style.display = "inline-flex";
       document.getElementById("clientName").value = "";
       document.getElementById("clientTelegram").value = "";
+      document.getElementById("clientPhone").value = "";
       document.getElementById("clientMessage").value = "";
     } else {
       status.textContent = "Помилка відправки: " + (data.error || "перевірте Vercel.");
