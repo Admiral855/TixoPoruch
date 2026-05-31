@@ -167,6 +167,13 @@ function renderClients(){
   document.getElementById("kpiPaid").textContent=clients.filter(c=>c.status==="paid").length;
 }
 
+function cleanText(text){
+  return String(text || "")
+    .replace(/\\n/g, "\n")
+    .replace(/\\r/g, "\r")
+    .replace(/\\t/g, " ");
+}
+
 function openClient(id){
   selectedId=id;
   const c=clients.find(x=>x.id===id);
@@ -187,8 +194,8 @@ function openClient(id){
       <option value="paid" ${c.status==="paid"?"selected":""}>Оплачено</option>
       <option value="done" ${c.status==="done"?"selected":""}>Завершено</option>
     </select>
-    <label class="label">Запит клієнта</label><textarea id="detailRequest">${c.request||""}</textarea>
-    <label class="label">Внутрішня нотатка</label><textarea id="detailNote">${c.note||""}</textarea>
+    <label class="label">Запит клієнта</label><textarea id="detailRequest">${cleanText(c.request)}</textarea>
+    <label class="label">Внутрішня нотатка</label><textarea id="detailNote">${cleanText(c.note)}</textarea>
     <div class="chat-box">
       <div class="head">
         <h2>Живий чат</h2>
@@ -218,8 +225,8 @@ async function saveDetail(id){
   await api("/api/clients", {method:"PUT", body:JSON.stringify({
     id,
     status:document.getElementById("detailStatus").value,
-    request:document.getElementById("detailRequest").value,
-    note:document.getElementById("detailNote").value
+    request:cleanText(document.getElementById("detailRequest").value),
+    note:cleanText(document.getElementById("detailNote").value)
   })});
   await loadClients(); openClient(id);
 }
@@ -238,8 +245,8 @@ async function addClient(){
     name, contact,
     tariff:document.getElementById("newTariff").value,
     status:document.getElementById("newStatus").value,
-    request:document.getElementById("newRequest").value,
-    note:document.getElementById("newNote").value,
+    request:cleanText(document.getElementById("newRequest").value),
+    note:cleanText(document.getElementById("newNote").value),
     source:"CRM"
   })});
   closeModal(); await loadClients(); if(result.client?.id) openClient(result.client.id);
