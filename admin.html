@@ -41,6 +41,21 @@
     .reply-row{display:grid;grid-template-columns:1fr auto;gap:10px;margin-top:10px}
     .reply-row textarea{min-height:54px}
 
+
+    .section-card{margin-top:18px;background:#fff;border:1px solid #e5e8f3;border-radius:20px;padding:20px;box-shadow:0 12px 30px rgba(15,23,42,.045)}
+    .section-card h2{margin:0 0 14px;font-size:21px}
+    .mini-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+    .stat-mini{background:#fafbff;border:1px solid #eef0f6;border-radius:14px;padding:14px}
+    .stat-mini b{display:block;color:#68718f;font-size:12px;margin-bottom:7px}
+    .stat-mini span{font-weight:950;font-size:23px;color:#10162f}
+    .broadcast-box{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end;margin-top:12px}
+    .broadcast-box textarea{min-height:76px}
+    .calendar-row{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;margin-top:10px;align-items:end}
+    .funnel-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+    .funnel-step{padding:14px;border-radius:14px;background:#fafbff;border:1px solid #eef0f6}
+    .funnel-step b{display:block;font-size:12px;color:#68718f;margin-bottom:6px}
+    .funnel-step span{font-size:24px;font-weight:950}
+
     @media(max-width:1150px){.app{grid-template-columns:1fr}.sidebar{height:auto;position:relative}.kpis,.crm-grid,.form-grid,.info-grid{grid-template-columns:1fr}.top,.actions{flex-direction:column;align-items:flex-start}.search,.btn{width:100%}.tablewrap{overflow-x:auto}table{min-width:760px}}
   </style>
 </head>
@@ -97,6 +112,37 @@
         <div class="detail-empty"><div><h2>Оберіть клієнта</h2><p>Натисніть “Відкрити”, щоб побачити картку заявки.</p></div></div>
       </div>
     </section>
+
+    <section class="section-card" id="managerSections">
+      <h2>📊 Воронка продаж</h2>
+      <div class="funnel-list">
+        <div class="funnel-step"><b>Нові</b><span id="funnelNew">0</span></div>
+        <div class="funnel-step"><b>В роботі</b><span id="funnelWork">0</span></div>
+        <div class="funnel-step"><b>Очікує оплату</b><span id="funnelWaiting">0</span></div>
+        <div class="funnel-step"><b>Оплачено</b><span id="funnelPaid">0</span></div>
+        <div class="funnel-step"><b>Виконано</b><span id="funnelDone">0</span></div>
+      </div>
+    </section>
+
+    <section class="section-card">
+      <h2>💰 Фінанси</h2>
+      <div class="mini-grid">
+        <div class="stat-mini"><b>Сьогодні</b><span id="moneyToday">0 грн</span></div>
+        <div class="stat-mini"><b>7 днів</b><span id="moneyWeek">0 грн</span></div>
+        <div class="stat-mini"><b>Місяць</b><span id="moneyMonth">0 грн</span></div>
+        <div class="stat-mini"><b>Весь час</b><span id="moneyAll">0 грн</span></div>
+      </div>
+    </section>
+
+    <section class="section-card">
+      <h2>📢 Масова розсилка</h2>
+      <p class="muted">Відправка працює тільки клієнтам, які писали в Telegram-бот і мають Chat ID.</p>
+      <div class="broadcast-box">
+        <textarea id="broadcastText" placeholder="Напишіть текст розсилки..."></textarea>
+        <button class="btn" onclick="sendBroadcast()">📢 Надіслати</button>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -193,6 +239,31 @@ function renderClients(){
   document.getElementById("kpiWork").textContent=clients.filter(c=>c.status==="work").length;
   document.getElementById("kpiPaid").textContent=clients.filter(c=>c.status==="paid").length;
 
+  const paidClients = clients.filter(isPaidClient);
+  const revenueAll = paidClients.reduce((sum,c)=>sum + getClientAmount(c), 0);
+  const revenueToday = paidClients.filter(c=>isToday(c.updated_at || c.created_at)).reduce((sum,c)=>sum + getClientAmount(c), 0);
+  const revenueWeek = paidClients.filter(c=>isDateWithin(c.updated_at || c.created_at, 7)).reduce((sum,c)=>sum + getClientAmount(c), 0);
+  const revenueMonth = paidClients.filter(c=>isDateWithin(c.updated_at || c.created_at, 31)).reduce((sum,c)=>sum + getClientAmount(c), 0);
+  const avg = paidClients.length ? Math.round(revenueAll / paidClients.length) : 0;
+  const conversion = clients.length ? Math.round((paidClients.length / clients.length) * 100) : 0;
+  const todayCount = clients.filter(c=>isToday(c.created_at)).length;
+
+  if(document.getElementById("kpiRevenue")) document.getElementById("kpiRevenue").textContent = moneyFormat(revenueAll);
+  if(document.getElementById("kpiConversion")) document.getElementById("kpiConversion").textContent = conversion + "%";
+  if(document.getElementById("kpiToday")) document.getElementById("kpiToday").textContent = todayCount;
+  if(document.getElementById("kpiAvg")) document.getElementById("kpiAvg").textContent = moneyFormat(avg);
+
+  if(document.getElementById("moneyToday")) document.getElementById("moneyToday").textContent = moneyFormat(revenueToday);
+  if(document.getElementById("moneyWeek")) document.getElementById("moneyWeek").textContent = moneyFormat(revenueWeek);
+  if(document.getElementById("moneyMonth")) document.getElementById("moneyMonth").textContent = moneyFormat(revenueMonth);
+  if(document.getElementById("moneyAll")) document.getElementById("moneyAll").textContent = moneyFormat(revenueAll);
+
+  if(document.getElementById("funnelNew")) document.getElementById("funnelNew").textContent = clients.filter(c=>c.status==="new").length;
+  if(document.getElementById("funnelWork")) document.getElementById("funnelWork").textContent = clients.filter(c=>c.status==="work").length;
+  if(document.getElementById("funnelWaiting")) document.getElementById("funnelWaiting").textContent = clients.filter(c=>c.status==="waiting_payment").length;
+  if(document.getElementById("funnelPaid")) document.getElementById("funnelPaid").textContent = clients.filter(c=>c.status==="paid").length;
+  if(document.getElementById("funnelDone")) document.getElementById("funnelDone").textContent = clients.filter(c=>c.status==="done").length;
+
   const doneEl = document.getElementById("kpiDone");
   if(doneEl) doneEl.textContent=clients.filter(c=>c.status==="done").length;
 
@@ -243,6 +314,25 @@ function openClient(id){
     </select>
     <label class="label">Запит клієнта</label><textarea id="detailRequest">${cleanText(c.request)}</textarea>
     <label class="label">Внутрішня нотатка</label><textarea id="detailNote">${cleanText(c.note)}</textarea>
+    <div class="chat-box">
+      <div class="head">
+        <h2>📅 Запис на консультацію</h2>
+      </div>
+      <div class="calendar-row">
+        <input class="input" id="scheduleDate" type="date">
+        <input class="input" id="scheduleTime" type="time">
+        <select id="scheduleFormat">
+          <option value="Швидкий чат">Швидкий чат</option>
+          <option value="Переписка">Переписка</option>
+          <option value="Відеоконсультація">Відеоконсультація</option>
+        </select>
+        <button class="btn" onclick="saveSchedule('${c.id}')">📅 Записати</button>
+      </div>
+      <div class="chat-actions">
+        <button class="mini" onclick="sendReminder('${c.id}', 'consultation')">🔔 Нагадати про консультацію</button>
+        <button class="mini" onclick="sendUpcomingReminder('${c.id}')">⏰ Нагадати за 1 годину</button>
+      </div>
+    </div>
     <div class="chat-box">
       <div class="head">
         <h2>Живий чат</h2>
@@ -364,6 +454,15 @@ function parseClientMessages(c){
     messages.push({
       role: "admin",
       text: "✅ Оплату підтверджено\n" + text,
+      time: formatDate(c.updated_at)
+    });
+  });
+
+  const scheduleParts = note.split("--- Запис на консультацію ---").slice(1).map(x => x.trim()).filter(Boolean);
+  scheduleParts.forEach(text => {
+    messages.push({
+      role: "admin",
+      text: "📅 Запис на консультацію\n" + text,
       time: formatDate(c.updated_at)
     });
   });
@@ -735,6 +834,114 @@ async function sendTelegramReply(id){
   }
 }
 
+
+
+async function saveSchedule(id){
+  const c = clients.find(x => x.id === id);
+  if(!c){ alert("Клієнта не знайдено"); return; }
+  if(!c.telegram_chat_id){ alert("У клієнта немає Telegram Chat ID."); return; }
+
+  const date = document.getElementById("scheduleDate").value;
+  const time = document.getElementById("scheduleTime").value;
+  const format = document.getElementById("scheduleFormat").value;
+
+  if(!date || !time){
+    alert("Вкажіть дату і час консультації");
+    return;
+  }
+
+  try{
+    await api("/api/send-schedule", {
+      method:"POST",
+      body:JSON.stringify({
+        telegram_chat_id:c.telegram_chat_id,
+        date,
+        time,
+        format,
+        client_id:c.id
+      })
+    });
+
+    const oldNote = document.getElementById("detailNote").value || "";
+    document.getElementById("detailNote").value = (oldNote + "\n\n--- Запис на консультацію ---\nДата: " + date + "\nЧас: " + time + "\nФормат: " + format).trim();
+    document.getElementById("detailStatus").value = "work";
+
+    await saveDetail(id);
+    await loadClientChat(id);
+
+    alert("Клієнта записано на консультацію ✅");
+  }catch(error){
+    alert("Помилка запису: " + error.message);
+  }
+}
+
+async function sendUpcomingReminder(id){
+  const c = clients.find(x => x.id === id);
+  if(!c){ alert("Клієнта не знайдено"); return; }
+  if(!c.telegram_chat_id){ alert("У клієнта немає Telegram Chat ID."); return; }
+
+  try{
+    await api("/api/send-reminder", {
+      method:"POST",
+      body:JSON.stringify({
+        telegram_chat_id:c.telegram_chat_id,
+        type:"consultation",
+        client_id:c.id
+      })
+    });
+
+    const oldNote = document.getElementById("detailNote").value || "";
+    document.getElementById("detailNote").value = (oldNote + "\n\n--- Нагадування відправлено ---\nНагадування про консультацію надіслано клієнту.").trim();
+
+    await saveDetail(id);
+    await loadClientChat(id);
+
+    alert("Нагадування відправлено ✅");
+  }catch(error){
+    alert("Помилка нагадування: " + error.message);
+  }
+}
+
+async function sendBroadcast(){
+  const textEl = document.getElementById("broadcastText");
+  const text = (textEl?.value || "").trim();
+
+  if(!text){
+    alert("Напишіть текст розсилки");
+    return;
+  }
+
+  const recipients = clients
+    .filter(c => c.telegram_chat_id)
+    .map(c => c.telegram_chat_id);
+
+  const uniqueRecipients = [...new Set(recipients)];
+
+  if(!uniqueRecipients.length){
+    alert("Немає клієнтів з Telegram Chat ID");
+    return;
+  }
+
+  if(!confirm("Надіслати розсилку " + uniqueRecipients.length + " клієнтам?")){
+    return;
+  }
+
+  try{
+    const result = await api("/api/send-broadcast", {
+      method:"POST",
+      body:JSON.stringify({
+        text,
+        recipients:uniqueRecipients
+      })
+    });
+
+    alert("Розсилку відправлено ✅ Успішно: " + result.sent + ", помилок: " + result.failed);
+
+    if(textEl) textEl.value = "";
+  }catch(error){
+    alert("Помилка розсилки: " + error.message);
+  }
+}
 
 document.getElementById("modal").addEventListener("click",e=>{if(e.target.id==="modal")closeModal()});
 document.addEventListener("keydown",e=>{if(e.key==="Enter"&&document.body.classList.contains("locked"))adminLogin()});
