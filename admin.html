@@ -258,6 +258,8 @@ function openClient(id){
         <button class="mini" onclick="sendPaymentDetails('${c.id}', 699)">💳 Реквізити 699 грн</button>
         <button class="mini" onclick="sendPaymentDetails('${c.id}', 1499)">💳 Реквізити 1499 грн</button>
         <button class="mini" onclick="markConsultationDone('${c.id}')">✅ Консультацію виконано</button>
+        <button class="mini" onclick="sendReminder('${c.id}', 'payment')">🔔 Нагадати про оплату</button>
+        <button class="mini" onclick="sendReminder('${c.id}', 'consultation')">🔔 Нагадати про консультацію</button>
       </div>
     </div>
     <div class="modal-actions">
@@ -340,6 +342,15 @@ function parseClientMessages(c){
     messages.push({
       role: "admin",
       text: "✅ Консультацію виконано\n" + text,
+      time: formatDate(c.updated_at)
+    });
+  });
+
+  const reminderParts = note.split("--- Нагадування відправлено ---").slice(1).map(x => x.trim()).filter(Boolean);
+  reminderParts.forEach(text => {
+    messages.push({
+      role: "admin",
+      text: "🔔 Нагадування відправлено\n" + text,
       time: formatDate(c.updated_at)
     });
   });
@@ -428,6 +439,53 @@ async function markConsultationDone(id){
 
   } catch (error) {
     alert("Помилка: " + error.message);
+  }
+}
+
+
+async function sendReminder(id, type){
+  const c = clients.find(x => x.id === id);
+
+  if (!c) {
+    alert("Клієнта не знайдено");
+    return;
+  }
+
+  if (!c.telegram_chat_id) {
+    alert("У цього клієнта немає Telegram Chat ID.");
+    return;
+  }
+
+  const label = type === "payment" ? "оплату" : "консультацію";
+
+  if (!confirm("Надіслати нагадування про " + label + "?")) {
+    return;
+  }
+
+  try {
+    await api("/api/send-reminder", {
+      method: "POST",
+      body: JSON.stringify({
+        telegram_chat_id: c.telegram_chat_id,
+        type: type,
+        client_id: c.id
+      })
+    });
+
+    const oldNote = document.getElementById("detailNote").value || "";
+    const noteText = type === "payment"
+      ? "Нагадування про оплату надіслано клієнту."
+      : "Нагадування про консультацію надіслано клієнту.";
+
+    document.getElementById("detailNote").value = (oldNote + "\n\n--- Нагадування відправлено ---\n" + noteText).trim();
+
+    await saveDetail(id);
+    await loadClientChat(id);
+
+    alert("Нагадування відправлено ✅");
+
+  } catch (error) {
+    alert("Помилка відправки нагадування: " + error.message);
   }
 }
 
